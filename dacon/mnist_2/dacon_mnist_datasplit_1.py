@@ -62,14 +62,25 @@ train=list()
 # print(imgs.info())
 # print(imgs.head())
 
-images=list()
-for i in range(50000):
-    filepath='../data/dacon/data2/dirty_mnist_2nd/%05d.png'%i
-    img=Image.open(filepath)
-    img=np.array(img)
-    img=pd.DataFrame(img)
-    images.append(img)
+# images=list()
+# for i in range(50000):
+#     filepath='../data/dacon/data2/dirty_mnist_2nd/%05d.png'%i
+#     img=Image.open(filepath)
+#     img=np.array(img)/255
+#     img=img.astype('float32')
+#     img=pd.DataFrame(img) 
+#     images.append(img)
 
-imgsets=pd.concat(images)
+# imgsets=pd.concat(images)
 
-imgsets.to_csv('../data/dacon/data2/imagsets.csv')
+# imgsets.to_csv('../data/dacon/data2/train.csv', index=False)
+
+images_num=list()
+for i in range(5000):
+    filepath='../data/dacon/data2/test_dirty_mnist_2nd/5%04d.png'%i
+    im=Image.open(filepath)
+    im=np.array(im)/255
+    im=im.astype('float32')
+    images_num.append(im)
+
+np.save(images_num, arr=images_num)

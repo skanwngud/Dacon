@@ -83,4 +83,4 @@ for i in range(5000):
     im=im.astype('float32')
     images_num.append(im)
 
-np.save(images_num, arr=images_num)
+np.save('../data/dacon/data2/test_set.npy', arr=images_num)

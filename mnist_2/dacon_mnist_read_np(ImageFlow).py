@@ -91,7 +91,7 @@ for train_index, test_index in kf.split(train, anss):
     model.add(MaxPooling2D(2, padding='same'))
     model.add(Dropout(0.2))
     model.add(Flatten())
-    model.add(Dense(1024))
+    model.add(Dense(512))
     model.add(BatchNormalization())
     model.add(Activation('relu'))
     model.add(Dropout(0.2))

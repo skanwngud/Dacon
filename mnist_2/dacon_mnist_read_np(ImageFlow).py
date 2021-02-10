@@ -23,6 +23,74 @@ train=np.load('C:/data/dacon/data2/train_set.npy', encoding='ASCII')
 test=np.load('C:/data/dacon/data2/test_set.npy', encoding='ASCII')
 ans=pd.read_csv('C:/data/dacon/data2/dirty_mnist_answer.csv', index_col=0)
 
+ans=ans.to_numpy()
+
+train=train.reshape(-1,256, 256, 1)
+
+print(train[0])
+print(train[0].shape)
+print(ans[0])
+print(ans[0].shape)
+
+ans=to_categorical(ans)
+ans=ans.reshape(-1, 26, 1, 2)
+
+print(ans[0])
+print(ans.shape)
+
+datagen=ImageDataGenerator(width_shift_range=(-1, 1), height_shift_range=(-1, 1))
+datagen2=ImageDataGenerator()
+
+kf=KFold(n_splits=15, shuffle=True, random_state=23)
+i=0
+results=list()
+for train_index, test_index in kf.split(train, ans):
+    x_train=train[train_index]
+    x_test=train[test_index]
+    y_train=ans[train_index]
+    y_test=ans[test_index]
+
+    x_train, x_test, y_train, y_test=train_test_split(train, ans,
+                train_size=0.9, random_state=23)
+
+    trainsets=datagen.flow(x_train, y_train, batch_size=50)
+    testsets=datagen2.flow(x_test, y_test)
+
+    model=Sequential()
+    model.add(Conv2D(64, 3, padding='same', input_shape=(256, 256, 1)))
+    model.add(Flatten())
+    model.add(Dense(128))
+    model.add(Dense(52))
+    model.add(Reshape((26, 1, 2)))
+    model.add(Dense(1, activation='softmax'))
+
+    es=EarlyStopping(patience=50, verbose=1)
+    rl=ReduceLROnPlateau(patience=20, verbose=1, factor=0.1)
+    cp=ModelCheckpoint(filepath='../data/modelcheckpoint/vision2_%s_{val_acc:.4f}-{val_loss:.4f}.hdf5'%i,
+                    verbose=1, save_best_only=True)
+
+    model.compile(loss='categorical_crossentropy', optimizer=Adam(learning_rate=0.1), metrics='acc')
+    # model.fit(x_train, y_train, validation_data=(x_test, y_test),
+    #         batch_size=32, epochs=1, callbacks=[es, cp, rl])
+    model.fit(trainsets, validation_data=(testsets),
+                epochs=1000, steps_per_epoch=900 ,callbacks=[es, rl, cp])
+
+    # pred=model.predict(test)
+    pred=model.predict_generator(testsets)
+    # results+=pred/5
+
+    # predict=np.argmax(pred, axis=-1)
+    predict=np.where(pred>0.5, 1, 0)
+    predict=predict[:, 0]
+
+print('train finish : ', datetime.datetime.now()-str_time)
+
+predict=pd.DataFrame(predict)
+
+# sub=pd.read_csv('../data/dacon/data2/sample_submission.csv')
+
+sub=predict.to_csv('../data/dacon/data2/submission.csv', index=False)
+'''
 train=np.resize(train, (50000, 128, 128, 1))
 test=np.resize(test, (5000, 128, 128, 1))
 
@@ -40,10 +108,7 @@ anss=to_categorical(anss)
 
 # print(anss.shape) # (50000, 26, 2)
 
-datagen=ImageDataGenerator(width_shift_range=(-1, 1), height_shift_range=(-1, 1))
-datagen2=ImageDataGenerator()
 
-kf=KFold(n_splits=15, shuffle=True, random_state=23)
 
 # train=train.reshape(-1, 256, 256, 1)
 # test=test.reshape(-1, 256, 256, 1)
@@ -51,19 +116,6 @@ kf=KFold(n_splits=15, shuffle=True, random_state=23)
 
 print('train start : ', datetime.datetime.now()-str_time)
 
-i=0
-results=list()
-for train_index, test_index in kf.split(train, anss):
-    x_train=train[train_index]
-    x_test=train[test_index]
-    y_train=anss[train_index]
-    y_test=anss[test_index]
-
-    x_train, x_test, y_train, y_test=train_test_split(train, anss,
-                train_size=0.9, random_state=23)
-
-    trainsets=datagen.flow(x_train, y_train, batch_size=50)
-    testsets=datagen2.flow(x_test, y_test)
     # answer=datagen2.flow(anss, shuffle=False)
 
     i+=1
@@ -112,24 +164,6 @@ for train_index, test_index in kf.split(train, anss):
 
     # model.summary()
 
-    es=EarlyStopping(patience=50, verbose=1)
-    rl=ReduceLROnPlateau(patience=20, verbose=1, factor=0.1)
-    cp=ModelCheckpoint(filepath='../data/modelcheckpoint/vision2_%s_{val_acc:.4f}-{val_loss:.4f}.hdf5'%i,
-                    verbose=1, save_best_only=True)
-
-    model.compile(loss='categorical_crossentropy', optimizer=Adam(learning_rate=0.1), metrics='acc')
-    # model.fit(x_train, y_train, validation_data=(x_test, y_test),
-    #         batch_size=32, epochs=1, callbacks=[es, cp, rl])
-    model.fit(trainsets, validation_data=(testsets),
-                epochs=1000, steps_per_epoch=900 ,callbacks=[es, rl, cp])
-
-    # pred=model.predict(test)
-    pred=model.predict_generator(testsets)
-    # results+=pred/5
-
-    # predict=np.argmax(pred, axis=-1)
-    predict=np.where(pred>0.5, 1, 0)
-    predict=predict[:, 0]
 
     print(pred[0])
     print(predict[0])
@@ -139,10 +173,4 @@ for train_index, test_index in kf.split(train, anss):
 
     print(str(i) + ' 번째 훈련 종료')
 
-print('train finish : ', datetime.datetime.now()-str_time)
-
-predict=pd.DataFrame(predict)
-
-# sub=pd.read_csv('../data/dacon/data2/sample_submission.csv')
-
-sub=predict.to_csv('../data/dacon/data2/submission.csv', index=False)
+'''

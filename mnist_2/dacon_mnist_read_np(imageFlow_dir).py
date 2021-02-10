@@ -18,7 +18,8 @@ datagen=ImageDataGenerator(
     width_shift_range=0.1,
     height_shift_range=0.1,
     vertical_flip=True,
-    horizontal_flip=True
+    horizontal_flip=True,
+    validation_split=0.2
 )
 datagen2=ImageDataGenerator()
 
@@ -26,10 +27,19 @@ train_set=datagen.flow_from_directory(
     'c:/data/dacon/data2/dirty_mnist',
     target_size=(128, 128),
     class_mode='categorical',
-    batch_size=10
+    batch_size=10,
+    subset='training'
 )
 
-test_set=datagen2.flow_from_directory(
+test_set=datagen.flow_from_directory(
+    'c:/data/dacon/data2/dirty_mnist',
+    target_size=(128, 128),
+    class_mode='categorical',
+    batch_size=10,
+    subset='validation'
+)
+
+pred_set=datagen2.flow_from_directory(
     'c:/data/dacon/data2/test_dirty_mnist',
     target_size=(128, 128),
     batch_size=10,
@@ -40,5 +50,5 @@ ans=answer.to_numpy()
 
 print(train_set[0][0].shape)
 print(train_set[0][1].shape)
-# print(test_set.shape)
-# print(ans.shape)
+print(test_set[0].shape)
+print(ans.shape)

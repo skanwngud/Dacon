@@ -25,12 +25,15 @@ train=np.load('C:/data/dacon/data2/train_set.npy')
 test=np.load('C:/data/dacon/data2/test_set.npy')
 ans=pd.read_csv('C:/data/dacon/data2/dirty_mnist_answer.csv', index_col=0)
 
+print(datetime.datetime.now()-str_time)
+
 ans=ans.to_numpy()
 
-train=cv2.cvtColor(train,)
+
 # train=train.reshape(-1, 256, 256, 3)
 
 plt.imshow(train[0])
+plt.imshow(test[0])
 plt.show()
 
 print(train[0])
@@ -43,4 +46,3 @@ ans=ans.reshape(-1, 26, 1, 2)
 
 print(ans[0])
 print(ans.shape) # (50000, 26,1, 2)
-

@@ -20,6 +20,12 @@ import matplotlib.pyplot as plt
 # c:/data/dacon/data2/dirty_mnist_answer.csv
 
 
+kf=KFold(
+    n_splits=5,
+    shuffle=True,
+    random_state=23
+)
+
 # 이미지 로드 / npy 저장
 
 str_time=datetime.datetime.now()
@@ -64,11 +70,12 @@ np.save('c:/data/dacon/data2/train.npy', arr=train_numpy)
 np.save('c:/data/dacon/data2/test.npy', arr=test_numpy)
 np.save('c:/data/dacon/data2/answer.npy', arr=answer_list)
 
-
+'''
 # npy 로드
 train=np.load('c:/data/dacon/data2/train.npy') # x
 answer=np.load('c:/data/dacon/data2/answer.npy') # y
 test=np.load('c:/data/dacon/data2/test.npy')
+
 
 
 # print(train.shape) # (50000, 128, 128)
@@ -132,3 +139,4 @@ pred=model.predict(
 print(loss)
 print(pred[0])
 print(y_test[0])
+'''

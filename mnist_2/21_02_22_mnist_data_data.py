@@ -8,7 +8,7 @@ import tensorflow
 
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Flatten, \
-    Dense, BatchNormalization, Activation, Reshape
+    Dense, BatchNormalization, Activation, Reshape, Dropout
 from keras.preprocessing.image import ImageDataGenerator
     
 from sklearn.model_selection import train_test_split, KFold
@@ -27,7 +27,7 @@ kf=KFold(
 )
 
 # 이미지 로드 / npy 저장
-
+'''
 str_time=datetime.datetime.now()
 
 train_list=glob.glob('c:/data/dacon/data2/dirty_mnist/*.png')
@@ -43,7 +43,6 @@ test_numpy=list()
 for i in train_list:
     img=cv2.imread(i, cv2.IMREAD_GRAYSCALE)
     img=cv2.resize(img, (128, 128))
-    img=cv2.fastNlMeansDenoising(img, h=10, templateWindowSize=7, searchWindowSize=21)
     img=np.array(img)/255.
     train_numpy.append(img)
 
@@ -51,26 +50,25 @@ for i in train_list:
 for i in test_list:
     img=cv2.imread(i, cv2.IMREAD_GRAYSCALE)
     img=cv2.resize(img, (128, 128))
-    img=cv2.fastNlMeansDenoising(img, h=10, templateWindowSize=7, searchWindowSize=21)
     img=np.array(img)/255.
     test_numpy.append(img)
 
 print(len(train_numpy))
-print(img[0])
-print(img[0].shape)
+print(train_numpy[0])
+print(train_numpy[0].shape)
 
-plt.imshow(train_list[0])
-plt.show()
-
-train_list=np.array(train_list)
-test_list=np.array(test_list)
+train_list=np.array(train_numpy)
+test_list=np.array(test_numpy)
 answer_list=answer_csv.to_numpy()
+
+plt.imshow(train_numpy[0])
+plt.show()
 
 np.save('c:/data/dacon/data2/train.npy', arr=train_numpy)
 np.save('c:/data/dacon/data2/test.npy', arr=test_numpy)
 np.save('c:/data/dacon/data2/answer.npy', arr=answer_list)
-
 '''
+
 # npy 로드
 train=np.load('c:/data/dacon/data2/train.npy') # x
 answer=np.load('c:/data/dacon/data2/answer.npy') # y
@@ -82,61 +80,84 @@ test=np.load('c:/data/dacon/data2/test.npy')
 # print(answer.shape) # (50000, 26)
 # print(test.shape) # (5000, 128, 128)
 
-x_train, x_val, y_train, y_val=train_test_split(
-    train, answer,
-    train_size=0.8,
-    random_state=23
-)
+# x_train, x_val, y_train, y_val=train_test_split(
+#     train, answer,
+#     train_size=0.8,
+#     random_state=23
+# )
 
-x_train, x_test, y_train, y_test=train_test_split(
-    x_train, y_train,
-    train_size=0.8,
-    random_state=23
-)
+# x_train, x_test, y_train, y_test=train_test_split(
+#     x_train, y_train,
+#     train_size=0.8,
+#     random_state=23
+# )
 
-print(x_train.shape) # (40000, 128, 128)
-print(y_train.shape) # (10000, 128, 128)
-print(x_val.shape)
-print(x_test.shape)
+# print(x_train.shape) # (40000, 128, 128)
+# print(y_train.shape) # (10000, 128, 128)
+# print(x_val.shape)
+# print(x_test.shape)
 
-# 데이터 분리
-x_train=x_train.reshape(-1, 128, 128, 1)
-x_val=x_val.reshape(-1, 128, 128, 1)
+# # 데이터 분리
 
-model=Sequential()
-model.add(Conv2D(128, 2, padding='same', input_shape=(128, 128, 1)))
-model.add(BatchNormalization())
-model.add(Activation('relu'))
-model.add(MaxPooling2D())
-model.add(Flatten())
-model.add(Dense(1024))
-model.add(Dense(52))
-model.add(Reshape((26, 2)))
-model.add(Dense(2, activation='softmax'))
+for train_index, val_index in kf.split(train, answer):
+    x_train=train[train_index]
+    y_train=answer[train_index]
+    x_val=train[val_index]
+    y_val=answer[val_index]
 
-model.compile(
-    optimizer='adam',
-    loss='sparse_categorical_crossentropy',
-    metrics='acc'
-)
+    x_train, x_test, y_train, y_test=train_test_split(
+        x_train, y_train,
+        train_size=0.9,
+        random_state=23
+    )
+    
+    x_train=x_train.reshape(-1, 128, 128, 1)
+    x_val=x_val.reshape(-1, 128, 128, 1)
+    x_test=x_test.reshape(-1, 128, 128, 1)
 
-model.fit(
-    x_train, y_train,
-    validation_data=(x_val, y_val),
-    batch_size=4,
-    epochs=1
-)
+    model=Sequential()
+    model.add(Conv2D(32, 2, padding='same', input_shape=(128, 128, 1)))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(Conv2D(32, 2, padding='same'))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(Conv2D(64, 2, padding='same'))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D())
+    model.add(Dropout(0.4))
+    model.add(Flatten())
+    model.add(Dense(1024))
+    model.add(Dense(52))
+    model.add(Reshape((26, 2)))
+    model.add(Dense(2, activation='softmax'))
 
-loss=model.evaluate(
-    x_test, y_test,
-    batch_size=4
-)
+    model.compile(
+        optimizer='adam',
+        loss='sparse_categorical_crossentropy',
+        metrics='acc'
+    )
 
-pred=model.predict(
-    x_test
-)
+    model.fit(
+        x_train, y_train,
+        validation_data=(x_val, y_val),
+        batch_size=6,
+        epochs=1
+    )
 
-print(loss)
-print(pred[0])
-print(y_test[0])
-'''
+    loss=model.evaluate(
+        x_test, y_test
+    )
+
+    pred=model.predict(
+        x_test
+    )
+    print(pred[:5])
+
+    print(loss)
+# print(y_test[:5])
+
+# results
+# try : [0.6907089948654175, 0.5378028750419617]
+# try 2: [0.6905454993247986, 0.5378028750419617]

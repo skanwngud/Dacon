@@ -1,0 +1,134 @@
+import numpy as np
+import pandas as pd
+import glob
+import datetime
+import cv2
+
+import tensorflow
+
+from keras.models import Sequential
+from keras.layers import Conv2D, MaxPooling2D, Flatten, \
+    Dense, BatchNormalization, Activation, Reshape
+from keras.preprocessing.image import ImageDataGenerator
+    
+from sklearn.model_selection import train_test_split, KFold
+
+import matplotlib.pyplot as plt
+
+# c:/data/dacon/data2/dirty_mnist/
+# c:/data/dacon/data2/test_dirty_mnist
+# c:/data/dacon/data2/dirty_mnist_answer.csv
+
+
+# 이미지 로드 / npy 저장
+
+str_time=datetime.datetime.now()
+
+train_list=glob.glob('c:/data/dacon/data2/dirty_mnist/*.png')
+test_list=glob.glob('c:/data/dacon/data2/test_dirty_mnist/*.png')
+answer_csv=pd.read_csv('c:/data/dacon/data2/dirty_mnist_answer.csv', index_col=0, header=0)
+
+print(len(train_list)) # 50000
+print(len(test_list)) # 5000
+
+train_numpy=list()
+test_numpy=list()
+
+for i in train_list:
+    img=cv2.imread(i, cv2.IMREAD_GRAYSCALE)
+    img=cv2.resize(img, (128, 128))
+    img=cv2.fastNlMeansDenoising(img, h=10, templateWindowSize=7, searchWindowSize=21)
+    img=np.array(img)/255.
+    train_numpy.append(img)
+
+
+for i in test_list:
+    img=cv2.imread(i, cv2.IMREAD_GRAYSCALE)
+    img=cv2.resize(img, (128, 128))
+    img=cv2.fastNlMeansDenoising(img, h=10, templateWindowSize=7, searchWindowSize=21)
+    img=np.array(img)/255.
+    test_numpy.append(img)
+
+print(len(train_numpy))
+print(img[0])
+print(img[0].shape)
+
+plt.imshow(train_list[0])
+plt.show()
+
+train_list=np.array(train_list)
+test_list=np.array(test_list)
+answer_list=answer_csv.to_numpy()
+
+np.save('c:/data/dacon/data2/train.npy', arr=train_numpy)
+np.save('c:/data/dacon/data2/test.npy', arr=test_numpy)
+np.save('c:/data/dacon/data2/answer.npy', arr=answer_list)
+
+
+# npy 로드
+train=np.load('c:/data/dacon/data2/train.npy') # x
+answer=np.load('c:/data/dacon/data2/answer.npy') # y
+test=np.load('c:/data/dacon/data2/test.npy')
+
+
+# print(train.shape) # (50000, 128, 128)
+# print(answer.shape) # (50000, 26)
+# print(test.shape) # (5000, 128, 128)
+
+x_train, x_val, y_train, y_val=train_test_split(
+    train, answer,
+    train_size=0.8,
+    random_state=23
+)
+
+x_train, x_test, y_train, y_test=train_test_split(
+    x_train, y_train,
+    train_size=0.8,
+    random_state=23
+)
+
+print(x_train.shape) # (40000, 128, 128)
+print(y_train.shape) # (10000, 128, 128)
+print(x_val.shape)
+print(x_test.shape)
+
+# 데이터 분리
+x_train=x_train.reshape(-1, 128, 128, 1)
+x_val=x_val.reshape(-1, 128, 128, 1)
+
+model=Sequential()
+model.add(Conv2D(128, 2, padding='same', input_shape=(128, 128, 1)))
+model.add(BatchNormalization())
+model.add(Activation('relu'))
+model.add(MaxPooling2D())
+model.add(Flatten())
+model.add(Dense(1024))
+model.add(Dense(52))
+model.add(Reshape((26, 2)))
+model.add(Dense(2, activation='softmax'))
+
+model.compile(
+    optimizer='adam',
+    loss='sparse_categorical_crossentropy',
+    metrics='acc'
+)
+
+model.fit(
+    x_train, y_train,
+    validation_data=(x_val, y_val),
+    batch_size=4,
+    epochs=1
+)
+
+loss=model.evaluate(
+    x_test, y_test,
+    batch_size=4
+)
+
+pred=model.predict(
+    x_test
+)
+
+print(loss)
+print(pred[0])
+print(y_test[0])

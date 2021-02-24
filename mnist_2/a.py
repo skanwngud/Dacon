@@ -1,5 +1,29 @@
 
-'''
+import numpy as np
+import pandas as pd
+import glob
+import datetime
+import cv2
+
+import tensorflow
+
+from keras.models import Sequential
+from keras.layers import Conv2D, MaxPooling2D, Flatten, \
+    Dense, BatchNormalization, Activation, Reshape, Dropout
+from keras.preprocessing.image import ImageDataGenerator
+from keras.utils import to_categorical
+from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+from keras.optimizers import Adam
+    
+from sklearn.model_selection import train_test_split, KFold
+from sklearn.preprocessing import OneHotEncoder
+
+import matplotlib.pyplot as plt
+
+train_list=glob.glob('c:/data/dacon/data2/dirty_mnist/*.png')
+test_list=glob.glob('c:/data/dacon/data2/test_dirty_mnist/*.png')
+answer_csv=pd.read_csv('c:/data/dacon/data2/dirty_mnist_answer.csv', index_col=0, header=0)
+
 train_numpy=list()
 test_numpy=list()
 
@@ -37,7 +61,11 @@ train=np.load('c:/data/dacon/data2/train.npy') # x
 answer=np.load('c:/data/dacon/data2/answer.npy') # y
 test=np.load('c:/data/dacon/data2/test.npy')
 
-
+kf=KFold(
+    n_splits=5,
+    shuffle=True,
+    random_state=23
+)
 
 # print(train.shape) # (50000, 128, 128)
 # print(answer.shape) # (50000, 26)
@@ -124,4 +152,3 @@ for train_index, val_index in kf.split(train, answer):
 # results
 # try : [0.6907089948654175, 0.5378028750419617]
 # try 2: [0.6905454993247986, 0.5378028750419617]
-'''

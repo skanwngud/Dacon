@@ -254,6 +254,9 @@ for train_index, val_index in kf.split(x, y):
     model.add(Dropout(0.2))
     model.add(Conv2D(32, 2, padding='same'))
     model.add(Conv2D(32, 2, padding='same'))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D())
     model.add(Flatten())
     model.add(Dense(512))
     model.add(BatchNormalization())
@@ -403,8 +406,6 @@ for train_index, val_index in kf.split(x, y):
 
     print('results : ', results[:5])
 
-plt.imshow(results[0])
-plt.show()
 
 # print('loss, acc : ', loss)
 
@@ -429,3 +430,6 @@ plt.show()
 
 # results :  ['V', 'W', 'Y', 'Y', 'L']
 # results :  ['V', 'M', 'Z', 'Y', 'L']
+# results :  ['V', 'M', 'Q', 'Y', 'L']
+# results :  ['V', 'M', 'R', 'Y', 'L']
+# results :  ['V', 'W', 'Q', 'Y', 'L']

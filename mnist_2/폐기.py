@@ -43,6 +43,7 @@ dftrain=df_train.iloc[:, 2:].values # mnist1 x
 dfanswer=df_train.iloc[:, 1].values # mnist1 y
 
 # digit OneHotEncoding
+data=list()
 label=list()
 for i in range(len(dfanswer)):
     if dfanswer[i]=='A':
@@ -128,6 +129,10 @@ for i in range(len(dfanswer)):
 
 label=to_categorical(label)
 
+for i in dftrain:
+    img=dftrain[i]
+    data.append(img)
+
 print(label)
 
 # print(len(train_list)) # 50000
@@ -139,12 +144,14 @@ print(label)
 # img2=cv2.imread(train_list_numpy[0], cv2.IMREAD_GRAYSCALE)
 # img2=cv2.resize(img2, (128, 128))
 
-x=dftrain
+x=data
 y=label
 
+x=np.array(x)
 x=x.reshape(-1, 28, 28, 1)/255.
 
-print(y.shape)
+print(x.shape)
+print(y.shape) # (2048, 26)
 
 x_train, x_val, y_train, y_val=train_test_split(
     x, y,
@@ -222,7 +229,7 @@ model.fit(
     x_train, y_train,
     validation_data=(x_val, y_val),
     batch_size=32,
-    epochs=1000,
+    epochs=1,
     callbacks=[es, mc, rl]
 )
 
@@ -236,6 +243,8 @@ pred=model.predict(
 
 pred=np.argmax(pred)
 
+print(type(dftrain))
+print(type(label))
 print(y_test.shape)
 print(x_test.shape)
 

@@ -19,6 +19,8 @@ from sklearn.preprocessing import OneHotEncoder
 
 import matplotlib.pyplot as plt
 
+from PIL import Image
+
 # c:/data/dacon/data2/dirty_mnist/
 # c:/data/dacon/data2/test_dirty_mnist
 # c:/data/dacon/data2/dirty_mnist_answer.csv
@@ -34,15 +36,40 @@ kf=KFold(
 
 str_time=datetime.datetime.now()
 
-train_list=glob.glob('c:/data/dacon/data2/dirty_mnist/*.png')
-test_list=glob.glob('c:/data/dacon/data2/test_dirty_mnist/*.png')
-answer_csv=pd.read_csv('c:/data/dacon/data2/dirty_mnist_answer.csv', index_col=0, header=0)
+# train_list=glob.glob('c:/data/dacon/data2/dirty_mnist/*.png')
+# test_list=glob.glob('c:/data/dacon/data2/test_dirty_mnist/*.png')
+# answer_csv=pd.read_csv('c:/data/dacon/data2/dirty_mnist_answer.csv', index_col=0, header=0)
 
 df_train=pd.read_csv('c:/data/dacon/data2/mnist_data/train.csv', index_col=0, header=0)
-dftrain=df_train.iloc[:, 2:].values # mnist1 x
+# dftrain=df_train.iloc[:, 2:].values # mnist1 x
 dfanswer=df_train.iloc[:, 1].values # mnist1 y
 df_test=pd.read_csv('c:/data/dacon/data2/mnist_data/test.csv', index_col=0, header=0)
 dftest=df_test.iloc[:, 1:].values
+
+# dftrain=dftrain.reshape(-1, 28, 28)
+
+# for i in range(2048):
+#     img=dftrain[i]
+#     img=np.where((img<65)&(img!=0), 0, img)
+#     img=np.where((img>65)&(img!=0), 255, img)
+#     img=Image.fromarray(img.astype('uint8'))
+#     img.save('c:/data/dacon/data2/mnist_data/%d.png'%i)
+
+dftrain=list()
+for i in range(2048):
+    img=cv2.imread('c:/data/dacon/data2/mnist_data/%d.png'%i)
+    img=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img=np.array(img)
+    dftrain.append(img)
+
+print(dftrain[0])
+print(dfanswer[0])
+
+dftrain=np.array(dftrain)
+
+# img=Image.fromarray(img.astype('uint8'), 'RGB')
+# img.save('c:/data/dacon/data2/mnist_data/train.png')
+
 
 # digit OneHotEncoding
 label=list()
@@ -147,6 +174,9 @@ y=label
 
 x=x.reshape(-1, 28, 28, 1)/255.
 dftest=dftest.reshape(-1, 28, 28, 1)/255.
+
+print('x : ', x.shape)
+print('y : ', y.shape)
 
 # print(y.shape)
 

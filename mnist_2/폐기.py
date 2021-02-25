@@ -45,7 +45,6 @@ df_test=pd.read_csv('c:/data/dacon/data2/mnist_data/test.csv', index_col=0, head
 dftest=df_test.iloc[:, 1:].values
 
 # digit OneHotEncoding
-data=list()
 label=list()
 for i in range(len(dfanswer)):
     if dfanswer[i]=='A':
@@ -131,16 +130,8 @@ for i in range(len(dfanswer)):
 
 label=to_categorical(label)
 
-<<<<<<< HEAD:mnist_2/폐기.py
-for i in dftrain:
-    img=dftrain[i]
-    data.append(img)
-
-print(label)
-=======
 print(dftrain[:5])
 print(label[:5])
->>>>>>> 669ce30cd1eefc39ac4232af7f8ebcf60cb1de62:mnist_2/21_02_22_mnist_data_data.py
 
 # print(len(train_list)) # 50000
 # print(len(test_list)) # 5000
@@ -151,97 +142,12 @@ print(label[:5])
 # img2=cv2.imread(train_list_numpy[0], cv2.IMREAD_GRAYSCALE)
 # img2=cv2.resize(img2, (128, 128))
 
-x=data
+x=dftrain
 y=label
 
-x=np.array(x)
 x=x.reshape(-1, 28, 28, 1)/255.
 dftest=dftest.reshape(-1, 28, 28, 1)/255.
 
-<<<<<<< HEAD:mnist_2/폐기.py
-print(x.shape)
-print(y.shape) # (2048, 26)
-
-x_train, x_val, y_train, y_val=train_test_split(
-    x, y,
-    train_size=0.8,
-    random_state=23
-)
-
-x_train, x_test, y_train, y_test=train_test_split(
-    x_train, y_train,
-    train_size=0.9,
-    random_state=23
-)
-
-print(x_test)
-print(y_test)
-
-# print(x_train.shape) # (1474, 28, 28, 1)
-# print(x_val.shape) # (410, 28, 28, 1)
-# print(x_test.shape) # (164, 28, 28, 1)
-# print(y_train.shape) # (1474, )
-
-model=Sequential()
-model.add(Conv2D(128, 2, padding='same', input_shape=(28, 28, 1)))
-model.add(BatchNormalization())
-model.add(Activation('relu'))
-model.add(Conv2D(128, 2, padding='same'))
-model.add(BatchNormalization())
-model.add(Activation('relu'))
-model.add(Conv2D(128, 2, padding='same'))
-model.add(BatchNormalization())
-model.add(Activation('relu'))
-model.add(MaxPooling2D())
-model.add(Dropout(0.2))
-model.add(Conv2D(64, 2, padding='same'))
-model.add(BatchNormalization())
-model.add(Activation('relu'))
-model.add(Conv2D(64, 2, padding='same'))
-model.add(BatchNormalization())
-model.add(Activation('relu'))
-model.add(MaxPooling2D())
-model.add(Dropout(0.2))
-model.add(Flatten())
-model.add(Dense(512))
-model.add(BatchNormalization())
-model.add(Activation('relu'))
-model.add(Dense(256))
-model.add(Dense(128))
-model.add(Dense(26, activation='softmax'))
-
-es=EarlyStopping(
-    patience=100,
-    verbose=1
-)
-
-mc=ModelCheckpoint(
-    'c:/data/modelcheckpoint/dacon2.hdf5',
-    verbose=1,
-    save_best_only=True
-)
-
-rl=ReduceLROnPlateau(
-    verbose=1,
-    factor=0.5,
-    patience=50
-)
-
-model.compile(
-    optimizer=Adam(
-        learning_rate=0.1),
-    loss='categorical_crossentropy',
-    metrics='acc'
-)
-
-model.fit(
-    x_train, y_train,
-    validation_data=(x_val, y_val),
-    batch_size=32,
-    epochs=1,
-    callbacks=[es, mc, rl]
-)
-=======
 # print(y.shape)
 
 # x_train, x_val, y_train, y_val=train_test_split(
@@ -249,7 +155,6 @@ model.fit(
 #     train_size=0.8,
 #     random_state=23
 # )
->>>>>>> 669ce30cd1eefc39ac4232af7f8ebcf60cb1de62:mnist_2/21_02_22_mnist_data_data.py
 
 # x_train, x_test, y_train, y_test=train_test_split(
 #     x_train, y_train,
@@ -265,49 +170,7 @@ datagen=ImageDataGenerator(
     rotation_range=0.1
 )
 
-<<<<<<< HEAD:mnist_2/폐기.py
-pred=np.argmax(pred)
-
-print(type(dftrain))
-print(type(label))
-print(y_test.shape)
-print(x_test.shape)
-
-print(loss)
-print(pred)
-print(pred[0])
-# print(y_test[:5])
-
-'''
-train_numpy=list()
-test_numpy=list()
-
-for i in train_list:
-    img=cv2.imread(i, cv2.IMREAD_GRAYSCALE)
-    img=cv2.resize(img, (128, 128))
-    img=np.array(img)/255.
-    train_numpy.append(img)
-
-
-for i in test_list:
-    img=cv2.imread(i, cv2.IMREAD_GRAYSCALE)
-    img=cv2.resize(img, (128, 128))
-    img=np.array(img)/255.
-    test_numpy.append(img)
-
-print(len(train_numpy))
-print(train_numpy[0])
-print(train_numpy[0].shape)
-
-train_list=np.array(train_numpy)
-test_list=np.array(test_numpy)
-answer_list=answer_csv.to_numpy()
-
-plt.imshow(train_numpy[0])
-plt.show()
-=======
 batch=16
->>>>>>> 669ce30cd1eefc39ac4232af7f8ebcf60cb1de62:mnist_2/21_02_22_mnist_data_data.py
 
 datagen2=ImageDataGenerator()
 

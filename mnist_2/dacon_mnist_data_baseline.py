@@ -1,250 +1,226 @@
-
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import cv2
-from tqdm import tqdm
-import imutils
-import zipfile
 import os
+import argparse
+from typing import Tuple, Sequence, Callable
+import csv
+import cv2
+import numpy as np
+import pandas as pd
 from PIL import Image
+from sklearn.model_selection import KFold
 
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torchvision.models as models
-import torchvision.transforms as T
-from torch.utils.data import DataLoader, Dataset
+import torch.optim as optim
+from torch import nn, Tensor
+from torch.utils.data import Dataset, DataLoader
+from torch.cuda.amp import autocast, GradScaler
+from torchvision import transforms
+from torchvision.models import resnet101
 
-def run():
-    torch.multiprocessing.freeze_support()
-        
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu") # 디바이스 설정
+parser = argparse.ArgumentParser()
+parser.add_argument('--batch_size', default=512, type=int)
+parser.add_argument('--lr', default=1e-3, type=float)
+args = parser.parse_args()
 
-dirty_mnist_answer = pd.read_csv("../data/dacon/data2/dirty_mnist_answer.csv")
-# dirty_mnist라는 디렉터리 속에 들어있는 파일들의 이름을 
-# namelist라는 변수에 저장
-namelist = os.listdir('../data/dacon/data2/dirty_mnist/')
+# Out_of_fold 를 위한 함수 정의
+def split_dataset(path: os.PathLike) -> None:
+    df = pd.read_csv(path)
+    kfold = KFold(n_splits=5)
+    for fold, (train, valid) in enumerate(kfold.split(df, df.index)):
+        df.loc[valid, 'kfold'] = int(fold)
 
-# numpy를 tensor로 변환하는 ToTensor 정의
-class ToTensor(object):
-    """numpy array를 tensor(torch)로 변환합니다."""
-    def __call__(self, sample):
-        image, label = sample['image'], sample['label']
-        # swap color axis because
-        # numpy image: H x W x C
-        # torch image: C X H X W
-        image = image.transpose((2, 0, 1))
-        return {'image': torch.FloatTensor(image),
-                'label': torch.FloatTensor(label)}
-# to_tensor 선언
-to_tensor = T.Compose([
-                        ToTensor()
-                    ])
+    df.to_csv('data/split_kfold.csv', index=False)
 
-class DatasetMNIST(torch.utils.data.Dataset):
-    def __init__(self,
-                dir_path,
-                meta_df,
-                transforms=to_tensor,#미리 선언한 to_tensor를 transforms로 받음
-                augmentations=None):
-        
-        self.dir_path = dir_path # 데이터의 이미지가 저장된 디렉터리 경로
-        self.meta_df = meta_df # 데이터의 인덱스와 정답지가 들어있는 DataFrame
+# 커스텀 데이터셋 정의
+class MnistDataset(Dataset):
+    def __init__(
+        self,
+        dir: os.PathLike,
+        image_ids: os.PathLike,
+        transforms: Sequence[Callable]
+    ) -> None:
+        self.dir = dir
+        self.transforms = transforms
 
-        self.transforms = transforms# Transform
-        self.augmentations = augmentations # Augmentation
-        
-    def __len__(self):
-        return len(self.meta_df)
-    
-    def __getitem__(self, index):
-        # 폴더 경로 + 이미지 이름 + .png => 파일의 경로
-        # 참고) "12".zfill(5) => 000012
-        #       "146".zfill(5) => 000145
-        # cv2.IMREAD_GRAYSCALE : png파일을 채널이 1개인 GRAYSCALE로 읽음
-        image = cv2.imread(self.dir_path +\
-                        str(self.meta_df.iloc[index,0]).zfill(5) + '.png',
-                        cv2.IMREAD_GRAYSCALE)
-        # 0 ~ 255의 값을 갖고 크기가 (256,256)인 numpy array를
-        # 0 ~ 1 사이의 실수를 갖고 크기가 (256,256,1)인 numpy array로 변환
-        image = (image/255).astype('float')[..., np.newaxis]
+        self.labels = {}
+        with open(image_ids, 'r') as f:
+            reader = csv.reader(f)
+            next(reader)
+            for row in reader:
+                self.labels[int(row[0])] = list(map(int, row[1:]))
 
-        # 정답 numpy array생성(존재하면 1 없으면 0)
-        label = self.meta_df.iloc[index, 1:].values.astype('float')
-        sample = {'image': image, 'label': label}
+        self.image_ids = list(self.labels.keys())
 
-        # transform 적용
-        # numpy to tensor
-        if self.transforms:
-            sample = self.transforms(sample)
+    def __len__(self) -> int:
+        return len(self.image_ids)
 
-        # sample 반환
-        return sample
+    def __getitem__(self, index: int) -> Tuple[Tensor]:
+        image_id = self.image_ids[index]
+        image = Image.open(
+            os.path.join(self.dir, f'{str(image_id).zfill(5)}.png')).convert('RGB')
+        target = np.array(self.labels.get(image_id)).astype(np.float32)
 
-# nn.Module을 상속 받아 MultiLabelResnet를 정의
-class MultiLabelResnet(nn.Module):
-    def __init__(self):
-        super(MultiLabelResnet, self).__init__()
-        self.conv2d = nn.Conv2d(1, 3, 3, stride=1)
-        self.resnet = models.resnet18() 
-        self.FC = nn.Linear(1000, 26)
+        if self.transforms is not None:
+            image = self.transforms(image)
 
-    def forward(self, x):
-        # resnet의 입력은 [3, N, N]으로
-        # 3개의 채널을 갖기 때문에
-        # resnet 입력 전에 conv2d를 한 층 추가
-        x = F.relu(self.conv2d(x))
+        return image, target
 
-        # resnet18을 추가
-        x = F.relu(self.resnet(x))
 
-        # 마지막 출력에 nn.Linear를 추가
-        # multilabel을 예측해야 하기 때문에
-        # softmax가 아닌 sigmoid를 적용
-        x = torch.sigmoid(self.FC(x))
+transforms_train = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize(
+        [0.485, 0.456, 0.406],
+        [0.229, 0.224, 0.225]
+    )
+])
+
+transforms_test = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize(
+        [0.485, 0.456, 0.406],
+        [0.229, 0.224, 0.225]
+    )
+])
+
+class MnistModel(nn.Module):
+    def __init__(self, num_classes: int = 26) -> None:
+        super().__init__()
+        self.resnet = resnet101()
+        self.classifier = \
+            nn.Linear(1000, num_classes)
+
+        nn.init.xavier_normal_(self.classifier.weight)
+
+    def forward(self, x: Tensor) -> Tensor:
+        x = self.resnet(x)
+        x = self.classifier(x)
+
         return x
-# 모델 선언
-model = MultiLabelResnet()
-# print(model)
 
-    
-# cross validation을 적용하기 위해 KFold 생성
-from sklearn.model_selection import KFold
-kfold = KFold(n_splits=5, shuffle=True, random_state=0)
+def train(fold: int, verbose: int = 30) -> None:
+    split_dataset('data/dirty_mnist_2nd_answer.csv')
+    df = pd.read_csv('data/split_kfold.csv')
+    df_train = df[df['kfold'] != fold].reset_index(drop=True)
+    df_valid = df[df['kfold'] == fold].reset_index(drop=True)
+
+    df_train.drop(['kfold'], axis=1).to_csv(f'data/train-kfold-{fold}.csv', index=False)
+    df_valid.drop(['kfold'], axis=1).to_csv(f'data/valid-kfold-{fold}.csv', index=False)
+
+    trainset = MnistDataset('data/train', f'data/train-kfold-{fold}.csv', transforms_train)
+    train_loader = DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=12)
+
+    validset = MnistDataset('data/train', f'data/valid-kfold-{fold}.csv', transforms_test)
+    valid_loader = DataLoader(validset, batch_size=128, shuffle=False, num_workers=12)
+
+    num_epochs = 80
+    device = 'cuda'
+    scaler = GradScaler()
+
+    model = NetMnistModel().to(device)
+    model = nn.DataParallel(model, device_ids=[0, 1, 2, 3])
+
+    optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-5)
+    criterion = nn.MultiLabelSoftMarginLoss()
+
+    for epoch in range(num_epochs):
+        model.train()
+        for i, (images, targets) in enumerate(train_loader):
+            optimizer.zero_grad()
+
+            images = images.to(device)
+            targets = targets.to(device)
+
+            with autocast():
+                outputs = model(images)
+                loss = criterion(outputs, targets)
+            
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
+
+            if (i+1) % verbose == 0:
+                outputs = outputs > 0.0
+                acc = (outputs == targets).float().mean()
+                print(f'Fold {fold} | Epoch {epoch} | L: {loss.item():.7f} | A: {acc.item():.7f}')
+
+        model.eval()
+        valid_acc = 0.0
+        valid_loss = 0.0
+        for i, (images, targets) in enumerate(valid_loader):
+            images = images.to(device)
+            targets = targets.to(device)
+
+            with autocast():
+                outputs = model(images)
+                loss = criterion(outputs, targets)
+
+            valid_loss += loss.item()
+            outputs = outputs > 0.0
+            valid_acc += (outputs == targets).float().mean()
+
+        print(f'Fold {fold} | Epoch {epoch} | L: {valid_loss/(i+1):.7f} | A: {valid_acc/(i+1):.7f}\n')
+
+        if epoch > num_epochs-20 and epoch < num_epochs-1:
+            torch.save(model.state_dict(), f'resnet101-f{fold}-{epoch}.pth')
 
 if __name__ == '__main__':
-    run()
-            
-    # dirty_mnist_answer에서 train_idx와 val_idx를 생성
-    best_models = [] # 폴드별로 가장 validation acc가 높은 모델 저장
-    for fold_index, (trn_idx, val_idx) in enumerate(kfold.split(dirty_mnist_answer),1):
-        print(f'[fold: {fold_index}]')
-        # cuda cache 초기화
-        torch.cuda.empty_cache()
+    train(0)
+    train(1)
+    train(2)
+    train(3)
+    train(4)
 
-        #train fold, validation fold 분할
-        train_answer = dirty_mnist_answer.iloc[trn_idx]
-        test_answer  = dirty_mnist_answer.iloc[val_idx]
+def load_model(fold: int, epoch: int, device: torch.device = 'cuda') -> nn.Module:
+    model = MnistModel().to(device)
+    state_dict = {}
+    for k, v in torch.load(f'resnet-f{fold}-{epoch}.pth').items():
+        state_dict[k[7:]] = v
 
-        #Dataset 정의
-        train_dataset = DatasetMNIST("../data/dacon/data2/dirty_mnist/", train_answer)
-        valid_dataset = DatasetMNIST("../data/dacon/data2/dirty_mnist/", test_answer)
+    model.load_state_dict(state_dict)
 
-        #DataLoader 정의
-        train_data_loader = DataLoader(
-            train_dataset,
-            batch_size = 128,
-            shuffle = False,
-            num_workers = 3
-        )
-        valid_data_loader = DataLoader(
-            valid_dataset,
-            batch_size = 32,
-            shuffle = False,
-            num_workers = 3
-        )
+    return model
 
-        # 모델 선언
-        model = MultiLabelResnet()
-        model.to(device)# gpu에 모델 할당
+def test(device: torch.device = 'cuda'):
+    submit = pd.read_csv('data/sample_submission.csv')
 
-        # 훈련 옵션 설정
-        optimizer = torch.optim.Adam(model.parameters(),
-                                    lr = 0.001)
-        lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
-                                                    step_size = 5,
-                                                    gamma = 0.75)
-        criterion = torch.nn.BCELoss()
+    model1 = load_model(0, 50)
+    model2 = load_model(1, 50)
+    model3 = load_model(2, 50)
+    model4 = load_model(3, 50)
+    model5 = load_model(4, 50)
 
-        # 훈련 시작
-        valid_acc_max = 0
-        for epoch in range(10):
-            # 1개 epoch 훈련
-            train_acc_list = []
-            with tqdm(train_data_loader,#train_data_loader를 iterative하게 반환
-                    total=train_data_loader.__len__(), # train_data_loader의 크기
-                    unit="batch") as train_bar:# 한번 반환하는 smaple의 단위는 "batch"
-                for sample in train_bar:
-                    train_bar.set_description(f"Train Epoch {epoch}")
-                    # 갱신할 변수들에 대한 모든 변화도를 0으로 초기화
-                    # 참고)https://tutorials.pytorch.kr/beginner/pytorch_with_examples.html
-                    optimizer.zero_grad()
-                    images, labels = sample['image'], sample['label']
-                    # tensor를 gpu에 올리기 
-                    images = images.to(device)
-                    labels = labels.to(device)
+    model1 = nn.DataParallel(model1, device_ids=[0, 1, 2, 3])
+    model2 = nn.DataParallel(model2, device_ids=[0, 1, 2, 3])
+    model3 = nn.DataParallel(model3, device_ids=[0, 1, 2, 3])
+    model4 = nn.DataParallel(model4, device_ids=[0, 1, 2, 3])
+    model5 = nn.DataParallel(model5, device_ids=[0, 1, 2, 3])
 
-                    # 모델의 dropoupt, batchnormalization를 train 모드로 설정
-                    model.train()
-                    # .forward()에서 중간 노드의 gradient를 계산
-                    with torch.set_grad_enabled(True):
-                        # 모델 예측
-                        probs  = model(images)
-                        # loss 계산
-                        loss = criterion(probs, labels)
-                        # 중간 노드의 gradient로
-                        # backpropagation을 적용하여
-                        # gradient 계산
-                        loss.backward()
-                        # weight 갱신
-                        optimizer.step()
+    model1.eval()
+    model2.eval()
+    model3.eval()
+    model4.eval()
+    model5.eval()
 
-                        # train accuracy 계산
-                        probs  = probs.cpu().detach().numpy()
-                        labels = labels.cpu().detach().numpy()
-                        preds = probs > 0.5
-                        batch_acc = (labels == preds).mean()
-                        train_acc_list.append(batch_acc)
-                        train_acc = np.mean(train_acc_list)
+    batch_size = test_loader.batch_size
+    batch_index = 0
+    for i, (images, targets) in enumerate(test_loader):
+        images = images.to(device)
+        targets = targets.to(device)
 
-                    # 현재 progress bar에 현재 미니배치의 loss 결과 출력
-                    train_bar.set_postfix(train_loss= loss.item(),
-                                        train_acc = train_acc)
-                    
+        outputs1 = model1(images)
+        outputs2 = model2(images)
+        outputs3 = model3(images)
+        outputs4 = model4(images)
+        outputs5 = model5(images)
 
-            # 1개 epoch학습 후 Validation 점수 계산
-            valid_acc_list = []
-            with tqdm(valid_data_loader,
-                    total=valid_data_loader.__len__(),
-                    unit="batch") as valid_bar:
-                for sample in valid_bar:
-                    valid_bar.set_description(f"Valid Epoch {epoch}")
-                    optimizer.zero_grad()
-                    images, labels = sample['image'], sample['label']
-                    images = images.to(device)
-                    labels = labels.to(device)
+        outputs = (outputs1 + outputs2 + outputs3 + outputs4 + outputs5) / 5
 
-                    # 모델의 dropoupt, batchnormalization를 eval모드로 설정
-                    model.eval()
-                    # .forward()에서 중간 노드의 gradient를 계산
-                    with torch.no_grad():
-                        # validation loss만을 계산
-                        probs  = model(images)
-                        valid_loss = criterion(probs, labels)
+        outputs = outputs > 0.0
+        batch_index = i * batch_size
+        submit.iloc[batch_index:batch_index+batch_size, 1:] = \
+            outputs.long().squeeze(0).detach().cpu().numpy()
 
-                        # train accuracy 계산
-                        probs  = probs.cpu().detach().numpy()
-                        labels = labels.cpu().detach().numpy()
-                        preds = probs > 0.5
-                        batch_acc = (labels == preds).mean()
-                        valid_acc_list.append(batch_acc)
+    submit.to_csv('resnet101-e50-kfold.csv', index=False)
 
-                    valid_acc = np.mean(valid_acc_list)
-                    valid_bar.set_postfix(valid_loss = valid_loss.item(),
-                                        valid_acc = valid_acc)
-                
-            # Learning rate 조절
-            lr_scheduler.step()
 
-        #     # 모델 저장
-        #     if valid_acc_max < valid_acc:
-        #         valid_acc_max = valid_acc
-        #         best_model = model
-        #         MODEL = "resnet18"
-        #         # 모델을 저장할 구글 드라이브 경로
-        #         path = "../data/dacon/Dacon_MNIST_model/"
-        #         torch.save(best_model, f'{path}{fold_index}_{MODEL}_{valid_loss.item():2.4f}_epoch_{epoch}.pth')
-
-        # # 폴드별로 가장 좋은 모델 저장
-        # best_models.append(best_model)
+if __name__ == '__main__':
+    test()

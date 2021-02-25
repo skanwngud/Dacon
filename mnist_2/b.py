@@ -33,6 +33,7 @@ for i in range(50000):
     # RETR_CCOMP 대신 RETR_EXTERNAL 사용? 뭔 소리야 이게
     contours, hieracrchy=cv2.findContours(connected.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     mask=np.zeros(bw.shape, dtype=np.uint8)
+    
 
     for idx in range(len(contours)):
         x,y,w,h=cv2.boundingRect(contours[idx])

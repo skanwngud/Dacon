@@ -45,111 +45,133 @@ df_train=pd.read_csv('c:/data/dacon/data2/mnist_data/train.csv', index_col=0, he
 dfanswer=df_train.iloc[:, 1].values # mnist1 y
 df_test=pd.read_csv('c:/data/dacon/data2/mnist_data/test.csv', index_col=0, header=0)
 dftest=df_test.iloc[:, 1:].values
+df_answer=df_test.iloc[:, 0].values
+
+answer=list()
+for i in range(len(dfanswer)):
+    label=dfanswer[i]
+    answer.append(label)
+
+for i in range(len(df_answer)):
+    label=df_answer[i]
+    answer.append(label)
+
+answer=np.array(answer)
+
+print(answer[:10])
+print(answer.shape)
+
 
 # dftrain=dftrain.reshape(-1, 28, 28)
+dftest=dftest.reshape(-1, 28, 28)
 
-# for i in range(2048):
-#     img=dftrain[i]
+# count=2048
+# for i in range(20480):
+#     img=dftest[i]
 #     img=np.where((img<65)&(img!=0), 0, img)
 #     img=np.where((img>65)&(img!=0), 255, img)
 #     img=Image.fromarray(img.astype('uint8'))
-#     img.save('c:/data/dacon/data2/mnist_data/%d.png'%i)
+#     img.save('c:/data/dacon/data2/mnist_data/' + str(count) + '.png')
+#     count+=1
 
 dftrain=list()
-for i in range(2048):
+for i in range(22528):
     img=cv2.imread('c:/data/dacon/data2/mnist_data/%d.png'%i)
     img=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img=cv2.resize(img, dsize=None, fx=9, fy=9, interpolation=cv2.INTER_CUBIC)
     img=np.array(img)
     dftrain.append(img)
 
-print(dftrain[0])
+print(dftrain[0].shape)
 print(dfanswer[0])
 
 dftrain=np.array(dftrain)
 
+# plt.imshow(dftrain[0])
+# plt.show()
 # img=Image.fromarray(img.astype('uint8'), 'RGB')
 # img.save('c:/data/dacon/data2/mnist_data/train.png')
 
 
 # digit OneHotEncoding
 label=list()
-for i in range(len(dfanswer)):
-    if dfanswer[i]=='A':
+for i in range(len(answer)):
+    if answer[i]=='A':
         digit=0
         label.append(digit)
-    elif dfanswer[i]=='B':
+    elif answer[i]=='B':
         digit=1
         label.append(digit)
-    elif dfanswer[i]=='C':
+    elif answer[i]=='C':
         digit=2
         label.append(digit)
-    elif dfanswer[i]=='D':
+    elif answer[i]=='D':
         digit=3
         label.append(digit)
-    elif dfanswer[i]=='E':
+    elif answer[i]=='E':
         digit=4
         label.append(digit)
-    elif dfanswer[i]=='F':
+    elif answer[i]=='F':
         digit=5
         label.append(digit)
-    elif dfanswer[i]=='G':
+    elif answer[i]=='G':
         digit=6
         label.append(digit)
-    elif dfanswer[i]=='H':
+    elif answer[i]=='H':
         digit=7
         label.append(digit)
-    elif dfanswer[i]=='I':
+    elif answer[i]=='I':
         digit=8
         label.append(digit)
-    elif dfanswer[i]=='J':
+    elif answer[i]=='J':
         digit=9
         label.append(digit)
-    elif dfanswer[i]=='K':
+    elif answer[i]=='K':
         digit=10
         label.append(digit)
-    elif dfanswer[i]=='L':
+    elif answer[i]=='L':
         digit=11
         label.append(digit)
-    elif dfanswer[i]=='M':
+    elif answer[i]=='M':
         digit=12
         label.append(digit)
-    elif dfanswer[i]=='N':
+    elif answer[i]=='N':
         digit=13
         label.append(digit)
-    elif dfanswer[i]=='O':
+    elif answer[i]=='O':
         digit=14
         label.append(digit)
-    elif dfanswer[i]=='P':
+    elif answer[i]=='P':
         digit=15
         label.append(digit)
-    elif dfanswer[i]=='Q':
+    elif answer[i]=='Q':
         digit=16
         label.append(digit)
-    elif dfanswer[i]=='R':
+    elif answer[i]=='R':
         digit=17
         label.append(digit)
-    elif dfanswer[i]=='S':
+    elif answer[i]=='S':
         digit=18
         label.append(digit)
-    elif dfanswer[i]=='T':
+    elif answer[i]=='T':
         digit=19
         label.append(digit)
-    elif dfanswer[i]=='U':
+    elif answer[i]=='U':
         digit=20
         label.append(digit)
-    elif dfanswer[i]=='V':
+    elif answer[i]=='V':
         digit=21
         label.append(digit)
-    elif dfanswer[i]=='W':
+    elif answer[i]=='W':
         digit=22
         label.append(digit)
-    elif dfanswer[i]=='X':
+    elif answer[i]=='X':
         digit=23
         label.append(digit)
-    elif dfanswer[i]=='Y':
+    elif answer[i]=='Y':
         digit=24
         label.append(digit)
-    elif dfanswer[i]=='Z':
+    elif answer[i]=='Z':
         digit=25
         label.append(digit)
     else:
@@ -172,8 +194,7 @@ print(label[:5])
 x=dftrain
 y=label
 
-x=x.reshape(-1, 28, 28, 1)/255.
-dftest=dftest.reshape(-1, 28, 28, 1)/255.
+x=x.reshape(-1, 252, 252, 1)/255.
 
 print('x : ', x.shape)
 print('y : ', y.shape)
@@ -244,6 +265,11 @@ for train_index, val_index in kf.split(x, y):
     x_val=x[val_index]
     y_val=y[val_index]
 
+    x_train, x_test, y_train, y_test=train_test_split(
+        x_train, y_train,
+        train_size=0.9
+    )
+
     train_set=datagen.flow(
         x_train, y_train,
         seed=23,
@@ -256,12 +282,12 @@ for train_index, val_index in kf.split(x, y):
     )
 
     test_set=datagen2.flow(
-        dftest,
+        x_test, y_test,
         seed=23
     )
 
     model=Sequential()
-    model.add(Conv2D(128, 2, padding='same', input_shape=(28, 28, 1)))
+    model.add(Conv2D(128, 2, padding='same', input_shape=(252, 252, 1)))
     model.add(BatchNormalization())
     model.add(Activation('relu'))
     model.add(Conv2D(128, 2, padding='same'))
@@ -324,21 +350,21 @@ for train_index, val_index in kf.split(x, y):
         metrics='acc'
     )
 
-    # model.fit(
-    #     x_train, y_train,
-    #     validation_data=(x_val, y_val),
-    #     batch_size=16,
-    #     epochs=5000,
-    #     callbacks=[es, mc, rl]
-    # )
-
     model.fit(
         train_set,
-        validation_data=val_set,
+        validation_data=(x_val, y_val),
         steps_per_epoch=len(x_train)//batch,
-        epochs=1000,
+        epochs=500,
         callbacks=[es, mc, rl]
     )
+
+    # model.fit_generator(
+    #     train_set,
+    #     validation_data=val_set,
+    #     steps_per_epoch=len(x_train)//batch,
+    #     epochs=500,
+    #     callbacks=[es, mc, rl]
+    # )
 
     # loss=model.evaluate(
     #     test_set
@@ -435,32 +461,4 @@ for train_index, val_index in kf.split(x, y):
             img='Z'
             results.append(img)
 
-    print('results : ', results[:5])
-
-
-# print('loss, acc : ', loss)
-
-# results
-# loss, acc :  [0.8030679225921631, 0.7439024448394775]
-# reults :  ['S', 'W', 'D', 'S', 'T']
-
-# loss, acc :  [0.6848068237304688, 0.7439024448394775]
-# reults :  ['S', 'W', 'H', 'Q', 'H']
-
-# loss, acc :  [0.7705674767494202, 0.792682945728302]
-# reults :  ['S', 'W', 'D', 'Q', 'H']
-
-# reults :  ['S', 'E', 'A', 'B', 'T']
-# loss, acc :  [0.0, 0.0]
-
-# reults :  ['P', 'M', 'Q', 'H', 'L']
-# reults :  ['V', 'M', 'Q', 'Y', 'L']
-# reults :  ['V', 'M', 'Y', 'Y', 'L']
-# reults :  ['V', 'W', 'Q', 'Y', 'L']
-# reults :  ['V', 'M', 'R', 'Y', 'L']
-
-# results :  ['V', 'W', 'Y', 'Y', 'L']
-# results :  ['V', 'M', 'Z', 'Y', 'L']
-# results :  ['V', 'M', 'Q', 'Y', 'L']
-# results :  ['V', 'M', 'R', 'Y', 'L']
-# results :  ['V', 'W', 'Q', 'Y', 'L']
+    print('results : ', results[:10])

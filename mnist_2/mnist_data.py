@@ -1,33 +1,10 @@
-import warnings
-warnings.filterwarnings('ignore')
+import cv2
 import numpy as np
-import PIL
-import pandas as pd
+import matplotlib.pyplot as plt
 
-from numpy import asarray
-from PIL import Image
-
-im=list()
-for i in range(25000):
-    filepath='../data/dacon/data/dirty_mnist/%05d.png'%i
-    image=Image.open(filepath)
-    image_data=asarray(image)
-    im.append(image_data)
-
-# im1=list()
-# for i in range(25000, 50000):
-#     filepath1='../data/dacon/data/dirty_mnist/%05d.png'%i
-#     image1=Image.open(filepath1)
-#     image_data1=asarray(image1)
-#     im1.append(image_data1)
-
-np.save('../data/dacon/data/a.npy', arr=im)
-# np.save('../data/dacon/data/b.npy', arr=im1)
-
-im_npy=np.load('../data/dacon/data/a.npy')
-# im_npy1=np.load('../data/dacon/data/b.npy')
-
-# image_set=np.concatenate((im_npy, im_npy1))
-
-# np.save('../data/dacon/data/image_set.npy', arr=image_set)
-
+# 데이터 크기 256, 256, 1
+# for i in range(5000):
+#     img=cv2.imread('c:/data/dacon/data2/dirty_mnist/%05d.png'%i)
+#     img=np.array(img)
+#     img=np.where((img<255) & (img!=0), 0, 1)
+#     cv2.imwrite('c:/data/dacon/data2/dirty_mnist_train/%05d.png'%i, img)

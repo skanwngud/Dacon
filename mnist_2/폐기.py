@@ -197,6 +197,7 @@ datagen2=ImageDataGenerator()
 # print(x_val.shape) # (410, 28, 28, 1)
 # print(x_test.shape) # (164, 28, 28, 1)
 # print(y_train.shape) # (1474, )
+
 pred=list()
 pred=0
 kf=KFold(

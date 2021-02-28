@@ -34,8 +34,6 @@ kf=KFold(
 
 # 이미지 로드 / npy 저장
 
-str_time=datetime.datetime.now()
-
 # train_list=glob.glob('c:/data/dacon/data2/dirty_mnist/*.png')
 # test_list=glob.glob('c:/data/dacon/data2/test_dirty_mnist/*.png')
 # answer_csv=pd.read_csv('c:/data/dacon/data2/dirty_mnist_answer.csv', index_col=0, header=0)
@@ -44,7 +42,7 @@ df_train=pd.read_csv('c:/data/dacon/data2/mnist_data/train.csv', index_col=0, he
 # dftrain=df_train.iloc[:, 2:].values # mnist1 x
 dfanswer=df_train.iloc[:, 1].values # mnist1 y
 df_test=pd.read_csv('c:/data/dacon/data2/mnist_data/test.csv', index_col=0, header=0)
-dftest=df_test.iloc[:, 1:].values
+# dftest=df_test.iloc[:, 1:].values
 df_answer=df_test.iloc[:, 0].values
 
 answer=list()
@@ -63,7 +61,7 @@ print(answer.shape)
 
 
 # dftrain=dftrain.reshape(-1, 28, 28)
-dftest=dftest.reshape(-1, 28, 28)
+# dftest=dftest.reshape(-1, 28, 28)
 
 # count=2048
 # for i in range(20480):
@@ -78,7 +76,7 @@ dftrain=list()
 for i in range(22528):
     img=cv2.imread('c:/data/dacon/data2/mnist_data/%d.png'%i)
     img=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    img=cv2.resize(img, dsize=None, fx=9, fy=9, interpolation=cv2.INTER_CUBIC)
+    # img=cv2.resize(img, dsize=None, fx=9, fy=9, interpolation=cv2.INTER_CUBIC)
     img=np.array(img)
     dftrain.append(img)
 
@@ -194,7 +192,7 @@ print(label[:5])
 x=dftrain
 y=label
 
-x=x.reshape(-1, 252, 252, 1)/255.
+x=x.reshape(-1, 28, 28, 1)/255.
 
 print('x : ', x.shape)
 print('y : ', y.shape)
@@ -221,7 +219,7 @@ datagen=ImageDataGenerator(
     rotation_range=0.1
 )
 
-batch=16
+batch=8
 
 datagen2=ImageDataGenerator()
 
@@ -240,14 +238,6 @@ datagen2=ImageDataGenerator()
 #     x_test, y_test,
 #     seed=23
 # )
-
-# print(x_test[:5])
-# print(y_test)
-
-# print(x_train.shape) # (1474, 28, 28, 1)
-# print(x_val.shape) # (410, 28, 28, 1)
-# print(x_test.shape) # (164, 28, 28, 1)
-# print(y_train.shape) # (1474, )
 
 pred=list()
 pred=0
@@ -287,7 +277,7 @@ for train_index, val_index in kf.split(x, y):
     )
 
     model=Sequential()
-    model.add(Conv2D(128, 2, padding='same', input_shape=(252, 252, 1)))
+    model.add(Conv2D(128, 2, padding='same', input_shape=(28, 28, 1)))
     model.add(BatchNormalization())
     model.add(Activation('relu'))
     model.add(Conv2D(128, 2, padding='same'))
@@ -351,10 +341,10 @@ for train_index, val_index in kf.split(x, y):
     )
 
     model.fit(
-        train_set,
+        x_train, y_train,
         validation_data=(x_val, y_val),
-        steps_per_epoch=len(x_train)//batch,
-        epochs=500,
+        steps_per_epoch=len(train_set)//batch,
+        epochs=1000,
         callbacks=[es, mc, rl]
     )
 

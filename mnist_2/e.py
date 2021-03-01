@@ -106,7 +106,7 @@ model.compile(
     optimizer=Adam(
         learning_rate=0.01
     ),
-    loss='sparse_categorica_crossentropy',
+    loss='sparse_categorical_crossentropy',
     metrics='acc'
 )
 

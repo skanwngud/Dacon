@@ -26,6 +26,8 @@ namelist = os.listdir('c:/data/dacon/data2/dirty_mnist/')
 
 # unmpy를 tensor로 변환하는 ToTensor 정의
 class ToTensor(object):
+    freeze_support()
+
     """numpy array를 tensor(torch)로 변환합니다."""
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
@@ -41,6 +43,7 @@ to_tensor = T.Compose([
                     ])
 
 class DatasetMNIST(torch.utils.data.Dataset):
+    
     def __init__(self,
                  dir_path,
                  meta_df,

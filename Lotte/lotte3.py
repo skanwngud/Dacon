@@ -61,7 +61,7 @@ x_train, x_val, y_train, y_val = train_test_split(
 )
 
 model = Sequential()
-model.add(mob)
+model.add(eff)
 model.add(Conv2D(128, 3, padding='same'))
 model.add(BatchNormalization())
 model.add(Activation('relu'))

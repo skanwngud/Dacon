@@ -1,3 +1,6 @@
+# model ensemble
+# 데이터 사이즈 안 맞아서 안 돌아감
+
 import numpy as np
 import pandas as pd
 import warnings
@@ -52,6 +55,18 @@ test = np.load(
     'c:/data/npy/lotte_test_gr.npy'
 )
 
+x2 = np.load(
+    'c:/data/npy/lotte_x.npy'
+)
+
+y2 = np.load(
+    'c:/data/npy/lotte_y.npy'
+)
+
+test2 = np.load(
+    'c:/data/npy/lotte_test.npy'
+)
+
 submission = pd.read_csv(
     'c:/LPD_competition/sample.csv'
 )
@@ -80,6 +95,11 @@ x_set = datagen.flow(
     batch_size = batch_size
 )
 
+x2_set = datagen.flow(
+    x2,
+    batch_size = batch_size
+)
+
 test_set = datagen2.flow(
     test,
     batch_size=batch_size,
@@ -90,28 +110,70 @@ x_train, x_val, y_train, y_val = train_test_split(
     x, y, train_size=0.8, random_state=23
 )
 
+x2_train, x2_val, y2_train, y2_val = train_test_split(
+    x2, y2, train_size = 0.8, random_state = 23
+)
+
 # 학원에서는 x,test 에 /255. 하고 집에서는 /255. 하지 말 것
 
-model = Sequential()
-# model.add(mob)
-model.add(Conv2D(128, 3, padding='same', input_shape=(128, 128, 1)))
-model.add(BatchNormalization())
-model.add(Activation('relu'))
-model.add(MaxPooling2D(3, padding='same'))
-model.add(Conv2D(256, 3, padding='same'))
-model.add(BatchNormalization())
-model.add(Activation('relu'))
-model.add(MaxPooling2D(3, padding='same'))
-model.add(Conv2D(512, 3, padding='same'))
-model.add(BatchNormalization())
-model.add(Activation('relu'))
-model.add(MaxPooling2D(3, padding='same'))
-model.add(Dense(512, activation='relu'))
-model.add(Flatten())
-model.add(Dense(128, activation='relu'))
-model.add(Dense(256, activation='relu'))
-model.add(Dense(512, activation='relu'))
-model.add(Dense(1000, activation='softmax'))
+input1 = Input(shape = (128, 128, 1))
+a = Conv2D(128, 3, padding='same')(input1)
+a = BatchNormalization()(a)
+a = Activation('relu')(a)
+a = MaxPooling2D(3, padding='same')(a)
+a = Conv2D(256, 3, padding='same')(a)
+a = BatchNormalization()(a)
+a = Activation('relu')(a)
+a = MaxPooling2D(3, padding='same')(a)
+a = Conv2D(512, 3, padding='same')(a)
+a = BatchNormalization()(a)
+a = Activation('relu')(a)
+a = MaxPooling2D(3, padding='same')(a)
+a = Flatten()(a)
+a = Dense(128)(a)
+a = BatchNormalization()(a)
+a = Activation('relu')(a)
+a = Dense(256)(a)
+a = BatchNormalization()(a)
+a = Activation('relu')(a)
+a = Dense(512)(a)
+a = BatchNormalization()(a)
+a = Activation('relu')(a)
+output1 = Dense(1024, activation='relu')(a)
+
+input2 = Input(shape = (128, 128, 3))
+b = Conv2D(128, 3, padding='same')(input1)
+b = BatchNormalization()(b)
+b = Activation('relu')(b)
+b = MaxPooling2D(3, padding='same')(b)
+b = Conv2D(256, 3, padding='same')(b)
+b = BatchNormalization()(b)
+b = Activation('relu')(b)
+b = MaxPooling2D(3, padding='same')(b)
+b = Conv2D(512, 3, padding='same')(b)
+b = BatchNormalization()(b)
+b = Activation('relu')(b)
+b = MaxPooling2D(3, padding='same')(b)
+b = Flatten()(b)
+b = Dense(128)(b)
+b = BatchNormalization()(b)
+b = Activation('relu')(b)
+b = Dense(256)(b)
+b = BatchNormalization()(b)
+b = Activation('relu')(b)
+b = Dense(512)(b)
+b = BatchNormalization()(b)
+b = Activation('relu')(b)
+output2 = Dense(1024, activation='relu')(b)
+
+merge = Concatenate([output1, output2])
+c = Dense(1024, activation='relu')(merge)
+c = Dense(2048, activation='relu')(c)
+c = Dense(1024, activation='relu')(c)
+output = Dense(1000, activation='softmax')(c)
+
+
+model = Model([input1, input2], output)
 
 model.compile(
     optimizer='adam',
@@ -120,12 +182,11 @@ model.compile(
 )
 
 hist = model.fit(
-    x_train, y_train,
-    validation_data=(x_val,  y_val),
-    epochs=1000,
+    [x_train, x2_train], [y_train, y2_train],
+    validation_data=([x_val, x2_val],  [y_val, y2_val]),
+    epochs=1,
     steps_per_epoch=epochs,
-    callbacks=[es, rl, mc],
-    batch_size = batch_size
+    callbacks=[es, rl, mc]
 )
 
 model.load_weights(
@@ -142,5 +203,5 @@ submission.to_csv(
     index = False
 )
 
-print(np.argmax(test_set[:5], axis=-1))
-print(np.argmax(pred[:5], axis=-1))
+plt.plot(hist)
+plt.show()

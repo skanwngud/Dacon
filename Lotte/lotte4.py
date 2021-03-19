@@ -9,14 +9,14 @@ submission = pd.read_csv(
 )
 
 model = load_model(
-    'c:/data/modelcheckpoint/lotte.hdf5'
+    'c:/data/modelcheckpoint/lotte_0.hdf5'
 )
 
 test = np.load(
-    'c:/data/npy/lotte_test_gr.npy'
+    'c:/data/npy/lotte_test.npy'
 )
 
-test = test.reshape(-1, 128, 128, 1)
+# test = test.reshape(-1, 128, 128, 3)
 
 pred = model.predict(
     test
@@ -24,9 +24,11 @@ pred = model.predict(
 
 submission['prediction'] = np.argmax(pred, axis=-1)
 submission.to_csv(
-    'c:/data/csv/lotte_2.csv', index = False
+    'c:/data/csv/lotte__2.csv', index = False
 )
 
 print('done')
 
-#
+# val_acc 0.87 : 45
+# val_acc 0.98 : 55
+# val_acc 0.97 : 

@@ -31,7 +31,7 @@ es = EarlyStopping(
 )
 
 rl = ReduceLROnPlateau(
-    patience=20,
+    patience=10,
     verbose=1
 )
 
@@ -73,7 +73,7 @@ eff.trainable = True
 # x = x.reshape(-1, 128, 128, 1)
 # test = test.reshape(-1, 128, 128, 1)
 
-batch_size = 16
+batch_size = 32
 epochs = len(x)//batch_size
 
 # x_train = datagen.flow(
@@ -105,9 +105,7 @@ x_train, x_val, y_train, y_val = train_test_split(
 
 model = Sequential()
 model.add(eff)
-model.add(Conv2D(1024, kernel_size=3, padding='same'))
-model.add(BatchNormalization())
-model.add(Activation('swish'))
+model.add(Conv2D(1024, kernel_size=3, padding='same', activation = 'swish'))
 model.add(GlobalAveragePooling2D())
 model.add(Dense(1000, activation='softmax'))
 

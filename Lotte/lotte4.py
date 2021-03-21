@@ -9,7 +9,7 @@ submission = pd.read_csv(
 )
 
 model = load_model(
-    'c:/data/modelcheckpoint/lotte_0.hdf5'
+    'c:/data/modelcheckpoint/lotte.hdf5'
 )
 
 test = np.load(

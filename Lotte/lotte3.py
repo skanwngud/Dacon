@@ -14,16 +14,16 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten,\
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
-datagen = ImageDataGenerator(
-    vertical_flip=True,
-    horizontal_flip=True,
-    rotation_range=0.1,
-    width_shift_range=(-1, 1),
-    height_shift_range=(-1, 1),
-    validation_split=0.8
-)
+# datagen = ImageDataGenerator(
+#     vertical_flip=True,
+#     horizontal_flip=True,
+#     rotation_range=0.1,
+#     width_shift_range=(-1, 1),
+#     height_shift_range=(-1, 1),
+#     validation_split=0.8
+# )
 
-datagen2 = ImageDataGenerator()
+# datagen2 = ImageDataGenerator()
 
 es = EarlyStopping(
     patience=50,
@@ -76,27 +76,30 @@ eff.trainable = True
 batch_size = 16
 epochs = len(x)//batch_size
 
-x_train = datagen.flow(
-    x,
-    batch_size = batch_size,
-    subset = 'training'
-)
-
-x_val = datagen.flow(
-    x,
-    batch_size = batch_size,
-    subset = 'validation'
-)
-
-test_set = datagen2.flow(
-    test,
-    batch_size=batch_size,
-    shuffle=False
-)
-
-# x_train, x_val, y_train, y_val = train_test_split(
-#     x, y, train_size=0.8, random_state=23
+# x_train = datagen.flow(
+#     x,
+#     batch_size = batch_size,
+#     subset = 'training'
 # )
+
+# x_val = datagen.flow(
+#     x,
+#     batch_size = batch_size,
+#     subset = 'validation'
+# )
+
+# test_set = datagen2.flow(
+#     test,
+#     batch_size=batch_size,
+#     shuffle=False
+# )
+
+# x_train = np.array(x_train)/255.
+# x_val = np.array(x_val)/255.
+
+x_train, x_val, y_train, y_val = train_test_split(
+    x, y, train_size=0.8, random_state=23
+)
 
 # 학원에서는 x,test 에 /255. 하고 집에서는 /255. 하지 말 것
 
@@ -104,7 +107,7 @@ model = Sequential()
 model.add(eff)
 model.add(Conv2D(1024, kernel_size=3, padding='same'))
 model.add(BatchNormalization())
-model.add(Activation('siwsh'))
+model.add(Activation('swish'))
 model.add(GlobalAveragePooling2D())
 model.add(Dense(1000, activation='softmax'))
 
@@ -115,10 +118,10 @@ model.compile(
 )
 
 hist = model.fit(
-    x_train,
-    validation_data=x_val,
+    x_train, y_train,
+    validation_data=(x_val, y_val),
     epochs=1000,
-    steps_per_epoch=epochs,
+    # steps_per_epoch=epochs,
     callbacks=[es, rl, mc],
     batch_size = batch_size
 )
@@ -128,7 +131,7 @@ model.load_weights(
 )
 
 pred = model.predict(
-    test_set
+    test
 )
 
 submission['prediction'] = np.argmax(pred, axis = -1)
@@ -137,5 +140,4 @@ submission.to_csv(
     index = False
 )
 
-print(np.argmax(test_set[:5], axis=-1))
-print(np.argmax(pred[:5], axis=-1))
+print('done')

@@ -30,7 +30,7 @@ submission = pd.read_csv(
     'c:/LPD_competition/sample.csv'
 )
 
-batch_size = 32
+batch_size = 16
 epochs = len(x)//batch_size
 
 es = EarlyStopping(
@@ -77,7 +77,7 @@ test_set = datagen2.flow(
     batch_size = batch_size
 )
 
-model_list = [MobileNet, EfficientNetB4, ResNet152, DenseNet201, InceptionResNetV2]
+model_list = [EfficientNetB4, ResNet152, DenseNet201, InceptionResNetV2, MobileNet]
 # efficientnetB4 가 가장 점수가 높게 나왔음
 
 count = 0

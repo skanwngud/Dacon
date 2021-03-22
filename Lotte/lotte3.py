@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.model_selection import KFold, train_test_split
 
-from tensorflow.keras.applications import MobileNet, EfficientNetB4
+from tensorflow.keras.applications import MobileNet, EfficientNetB7
 from tensorflow.keras.models import Model, Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten,\
     BatchNormalization, Activation, Dense, Dropout, Input, Concatenate, GlobalAveragePooling2D
@@ -62,7 +62,7 @@ submission = pd.read_csv(
 #     input_shape=(128, 128, 3)
 # )
 
-eff = EfficientNetB4(
+eff = EfficientNetB7(
     include_top=False,
     input_shape=(128, 128, 3)
 )
@@ -118,7 +118,7 @@ model.compile(
 hist = model.fit(
     x_train, y_train,
     validation_data=(x_val, y_val),
-    epochs=1000,
+    epochs=1,
     # steps_per_epoch=epochs,
     callbacks=[es, rl, mc],
     batch_size = batch_size

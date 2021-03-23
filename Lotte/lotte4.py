@@ -9,11 +9,11 @@ submission = pd.read_csv(
 )
 
 model = load_model(
-    'c:/data/modelcheckpoint/lotte.hdf5'
+    'c:/data/modelcheckpoint/lotte_0.hdf5'
 )
 
 test = np.load(
-    'c:/data/npy/lotte_test_2.npy'
+    'c:/data/npy/lotte_tests.npy'
 )
 
 # test = test.reshape(-1, 128, 128, 3)

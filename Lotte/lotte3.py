@@ -14,6 +14,7 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten,\
     BatchNormalization, Activation, Dense, Dropout, Input, Concatenate, GlobalAveragePooling2D, GaussianDropout
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow import train
 
 str_time = datetime.datetime.now()
 
@@ -70,31 +71,31 @@ eff = EfficientNetB4(
 # mob.trainable = True
 eff.trainable = True
 
-# x = x.reshape(-1, 128, 128, 1)
-# test = test.reshape(-1, 128, 128, 1)
-
 batch_size = 32
 
 x_train, x_val, y_train, y_val = train_test_split(
     x, y, train_size=0.9, random_state=23
 )
 
-x_train = datagen.flow(
+train_set = datagen.flow(
     x_train, y_train,
+    seed = 23,
     batch_size = batch_size
 )
 
-x_val = datagen.flow(
+val_set = datagen2.flow(
     x_val, y_val,
+    seed = 23,
     batch_size = batch_size
 )
 
-epochs = len(x_train)//batch_size+1
+epochs = len(x_train)//batch_size
 
 # 학원에서는 x,test 에 /255. 하고 집에서는 /255. 하지 말 것
 
 model = Sequential()
 model.add(eff)
+# model.add(Conv2D(1024, kernel_size=3, padding='same', activation = 'swish'))
 model.add(GlobalAveragePooling2D())
 model.add(Dropout(0.3))
 model.add(Dense(128, activation='swish'))
@@ -108,10 +109,10 @@ model.compile(
 )
 
 hist = model.fit_generator(
-    x_train,
-    validation_data = x_val,
-    epochs=1,
-    steps_per_epoch = 1350,
+    train_set,
+    validation_data=val_set,
+    epochs=1000,
+    steps_per_epoch=1350,
     callbacks=[es, rl, mc]
 )
 
@@ -129,5 +130,5 @@ submission.to_csv(
     index = False
 )
 
-print(datetime.datetime.now() - str_time)
+print('time : ', datetime.datetime.now() - str_time)
 print('done')

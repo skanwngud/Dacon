@@ -17,16 +17,13 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 str_time = datetime.datetime.now()
 
-# datagen = ImageDataGenerator(
-#     vertical_flip=True,
-#     horizontal_flip=True,
-#     rotation_range=0.1,
-#     width_shift_range=(-1, 1),
-#     height_shift_range=(-1, 1),
-#     validation_split=0.8
-# )
+datagen = ImageDataGenerator(
+    rotation_range=40,
+    width_shift_range=(-1, 1),
+    height_shift_range=(-1, 1)
+)
 
-# datagen2 = ImageDataGenerator()
+datagen2 = ImageDataGenerator()
 
 es = EarlyStopping(
     patience=50,
@@ -45,15 +42,15 @@ mc = ModelCheckpoint(
 )
 
 x = np.load(
-    'c:/data/npy/lotte_x.npy'
+    'c:/data/npy/lotte_xs.npy'
 )
 
 y = np.load(
-    'c:/data/npy/lotte_y.npy'
+    'c:/data/npy/lotte_ys.npy'
 )
 
 test = np.load(
-    'c:/data/npy/lotte_test.npy'
+    'c:/data/npy/lotte_tests.npy'
 )
 
 submission = pd.read_csv(
@@ -77,38 +74,27 @@ eff.trainable = True
 # test = test.reshape(-1, 128, 128, 1)
 
 batch_size = 32
-epochs = len(x)//batch_size
-
-# x_train = datagen.flow(
-#     x,
-#     batch_size = batch_size,
-#     subset = 'training'
-# )
-
-# x_val = datagen.flow(
-#     x,
-#     batch_size = batch_size,
-#     subset = 'validation'
-# )
-
-# test_set = datagen2.flow(
-#     test,
-#     batch_size=batch_size,
-#     shuffle=False
-# )
-
-# x_train = np.array(x_train)/255.
-# x_val = np.array(x_val)/255.
 
 x_train, x_val, y_train, y_val = train_test_split(
-    x, y, train_size=0.8, random_state=23
+    x, y, train_size=0.9, random_state=23
 )
+
+x_train = datagen.flow(
+    x_train, y_train,
+    batch_size = batch_size
+)
+
+x_val = datagen.flow(
+    x_val, y_val,
+    batch_size = batch_size
+)
+
+epochs = len(x_train)//batch_size+1
 
 # 학원에서는 x,test 에 /255. 하고 집에서는 /255. 하지 말 것
 
 model = Sequential()
 model.add(eff)
-# model.add(Conv2D(1024, kernel_size=3, padding='same', activation = 'swish'))
 model.add(GlobalAveragePooling2D())
 model.add(Dropout(0.3))
 model.add(Dense(128, activation='swish'))
@@ -121,13 +107,12 @@ model.compile(
     metrics='acc'
 )
 
-hist = model.fit(
-    x_train, y_train,
-    validation_data=(x_val, y_val),
+hist = model.fit_generator(
+    x_train,
+    validation_data = x_val,
     epochs=1,
-    # steps_per_epoch=epochs,
-    callbacks=[es, rl, mc],
-    batch_size = batch_size
+    steps_per_epoch = 1350,
+    callbacks=[es, rl, mc]
 )
 
 model.load_weights(

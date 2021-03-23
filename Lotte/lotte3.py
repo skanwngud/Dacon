@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import datetime
 
 from sklearn.model_selection import KFold, train_test_split
-
 from tensorflow.keras.applications import MobileNet, EfficientNetB4
+from tensorflow.keras.applications.efficientnet import preprocess_input
 from tensorflow.keras.models import Model, Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten,\
     BatchNormalization, Activation, Dense, Dropout, Input, Concatenate, GlobalAveragePooling2D, GaussianDropout
@@ -27,7 +27,7 @@ datagen = ImageDataGenerator(
 datagen2 = ImageDataGenerator()
 
 es = EarlyStopping(
-    patience=50,
+    patience=20,
     verbose=1
 )
 
@@ -73,6 +73,9 @@ eff.trainable = True
 
 batch_size = 32
 
+x = preprocess_input(x)
+test = preprocess_input(test)
+
 x_train, x_val, y_train, y_val = train_test_split(
     x, y, train_size=0.9, random_state=23
 )
@@ -94,6 +97,7 @@ epochs = len(x_train)//batch_size
 # 학원에서는 x,test 에 /255. 하고 집에서는 /255. 하지 말 것
 
 model = Sequential()
+
 model.add(eff)
 # model.add(Conv2D(1024, kernel_size=3, padding='same', activation = 'swish'))
 model.add(GlobalAveragePooling2D())
@@ -111,7 +115,7 @@ model.compile(
 hist = model.fit_generator(
     train_set,
     validation_data=val_set,
-    epochs=1000,
+    epochs=200,
     steps_per_epoch=1350,
     callbacks=[es, rl, mc]
 )

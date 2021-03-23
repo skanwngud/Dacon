@@ -16,7 +16,7 @@ from sklearn.model_selection import train_test_split, KFold
 test = list()
 for i in range(72000):
     temp = cv2.imread(
-        'c:/LPD_competition/test/%s.jpg'%i, 0
+        'c:/LPD_competition/test/%s.jpg'%i,
     )
     temp = cv2.resize(temp, (128, 128))
     temp = np.array(temp)
@@ -31,15 +31,15 @@ label = list()
 for i in range(1000):
     for j in range(48):
         temp = cv2.imread(
-            'c:/LPD_competition/train/' + str(i) +'/'+ str(j) + '.jpg', 0
+            'c:/LPD_competition/train/' + str(i) +'/'+ str(j) + '.jpg',
         )
         temp = cv2.resize(temp, (128, 128))
         temp = np.array(temp)
         train.append(temp)
         label.append(i)
 
-test = np.array(test)/255.
-train = np.array(train)/255.
+test = np.array(test)
+train = np.array(train)
 label = np.array(label)
 
 print(test.shape)
@@ -49,13 +49,13 @@ print(label.shape)
 print(label[:50])
 
 np.save(
-    'c:/data/npy/lotte_x_gr.npy', arr = train
+    'c:/data/npy/lotte_xs.npy', arr = train
 )
 
 np.save(
-    'c:/data/npy/lotte_y_gr.npy', arr = label
+    'c:/data/npy/lotte_ys.npy', arr = label
 )
 
 np.save(
-    'c:/data/npy/lotte_test_gr.npy', arr = test
+    'c:/data/npy/lotte_tests.npy', arr = test
 )

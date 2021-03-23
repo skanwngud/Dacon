@@ -4,15 +4,18 @@ import warnings
 warnings.filterwarnings('ignore')
 import cv2
 import matplotlib.pyplot as plt
+import datetime
 
 from sklearn.model_selection import KFold, train_test_split
 
-from tensorflow.keras.applications import MobileNet, EfficientNetB7
+from tensorflow.keras.applications import MobileNet, EfficientNetB4
 from tensorflow.keras.models import Model, Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten,\
-    BatchNormalization, Activation, Dense, Dropout, Input, Concatenate, GlobalAveragePooling2D
+    BatchNormalization, Activation, Dense, Dropout, Input, Concatenate, GlobalAveragePooling2D, GaussianDropout
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+
+str_time = datetime.datetime.now()
 
 # datagen = ImageDataGenerator(
 #     vertical_flip=True,
@@ -62,7 +65,7 @@ submission = pd.read_csv(
 #     input_shape=(128, 128, 3)
 # )
 
-eff = EfficientNetB7(
+eff = EfficientNetB4(
     include_top=False,
     input_shape=(128, 128, 3)
 )
@@ -105,8 +108,11 @@ x_train, x_val, y_train, y_val = train_test_split(
 
 model = Sequential()
 model.add(eff)
-model.add(Conv2D(1024, kernel_size=3, padding='same', activation = 'swish'))
+# model.add(Conv2D(1024, kernel_size=3, padding='same', activation = 'swish'))
 model.add(GlobalAveragePooling2D())
+model.add(Dropout(0.3))
+model.add(Dense(128, activation='swish'))
+model.add(GaussianDropout(0.4))
 model.add(Dense(1000, activation='softmax'))
 
 model.compile(
@@ -138,4 +144,5 @@ submission.to_csv(
     index = False
 )
 
+print(datetime.datetime.now() - str_time)
 print('done')

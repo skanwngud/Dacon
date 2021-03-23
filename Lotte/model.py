@@ -1,3 +1,5 @@
+# 최종모델
+
 import numpy as np
 import pandas as pd
 
@@ -14,9 +16,7 @@ from sklearn.model_selection import train_test_split, KFold
 
 time_now = datetime.now()
 
-kf = KFold(
-    n_splits = 5
-)
+batch_size = 32
 
 eff = EfficientNetB4(
     include_top=False,
@@ -24,12 +24,12 @@ eff = EfficientNetB4(
 )
 
 es = EarlyStopping(
-    patience=20,
+    patience=40,
     verbose=1
 )
 
 rl = ReduceLROnPlateau(
-    patience=10,
+    patience=15,
     verbose=1
 )
 
@@ -37,9 +37,8 @@ rl = ReduceLROnPlateau(
 datagen = ImageDataGenerator(
     width_shift_range=(-1, 1),
     height_shift_range=(-1, 1),
-    rotation_range=0.1,
-    rescale=1./255,
-    validation_split=0.2
+    rotation_range=40,
+    rescale=1./255
 )
 
 datagen2 = ImageDataGenerator(
@@ -62,6 +61,24 @@ x_train, x_val, y_train, y_val = train_test_split(
     x, y, train_size=0.8, random_state=23
 )
 
+train_set = datagen.flow(
+    x_train, y_train,
+    batch_size = batch_size,
+    seed = 23
+)
+
+val_set = datagen2.flow(
+    x_val, y_val,
+    batch_size = batch_size,
+    seed = 23
+)
+
+test_set = datagen2.flow(
+    test,
+    batch_size = batch_size,
+    seed = 23
+)
+
 submission = pd.read_csv(
     'c:/LPD_competition/sample.csv'
 )
@@ -80,28 +97,25 @@ mc = ModelCheckpoint(
 
 model = Sequential()
 model.add(eff)
-model.add(Conv2D(128, 3, padding='same'))
-model.add(BatchNormalization())
-model.add(Activation('swish'))
-model.add(MaxPooling2D(3, padding='same'))
-model.add(Conv2D(256, 3, padding='same'))
-model.add(BatchNormalization())
-model.add(Activation('swish'))
 model.add(GlobalAveragePooling2D())
+model.add(Dense(4048))
+model.add(BatchNormalization())
+model.add(Activation('relu'))
 model.add(Dense(1000, activation='softmax'))
 
 model.compile(
-    optimizer='rmsprop',
+    optimizer='adam',
     loss='sparse_categorical_crossentropy',
     metrics='acc'
 )
 
 model.fit(
-    x_train, y_train,
-    validation_data=(x_val, y_val),
-    epochs = 500,
+    train_set,
+    validation_data=val_set,
+    epochs = 1000,
+    steps_per_epoch = len(x_train)//batch_size,
     callbacks = [es, rl, mc],
-    batch_size = 16
+    batch_size = 32    
 )
 
 
@@ -110,16 +124,10 @@ model.load_weights(
 )
 
 pred = model.predict(
-    test
+    test_set
 )
 
-results = model.predict(
-    test
-)
-results += results
-
-
-submission['prediction']=np.argmax(results, axis=-1)
+submission['prediction']=np.argmax(pred, axis=-1)
 submission.to_csv(
     'c:/LPD_competition/submission_.csv',
     index = False

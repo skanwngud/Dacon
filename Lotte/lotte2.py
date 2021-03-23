@@ -49,6 +49,7 @@ print(label.shape)
 print(label[:50])
 
 np.save(
+<<<<<<< HEAD
     'c:/data/npy/lotte_x_2.npy', arr = train
 )
 
@@ -58,4 +59,15 @@ np.save(
 
 np.save(
     'c:/data/npy/lotte_test_2.npy', arr = test
+=======
+    'c:/data/npy/lotte_xs.npy', arr = train
+)
+
+np.save(
+    'c:/data/npy/lotte_ys.npy', arr = label
+)
+
+np.save(
+    'c:/data/npy/lotte_tests.npy', arr = test
+>>>>>>> ec6166b03fcb5d13ec6e554a2de91f868e57224c
 )

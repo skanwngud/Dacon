@@ -11,14 +11,19 @@ from sklearn.model_selection import KFold, train_test_split
 from tensorflow.keras.applications import MobileNet, EfficientNetB4
 from tensorflow.keras.models import Model, Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten,\
+<<<<<<< HEAD
     BatchNormalization, Activation, Dense, Dropout, Input, Concatenate, \
         GlobalAveragePooling2D, Dropout
+=======
+    BatchNormalization, Activation, Dense, Dropout, Input, Concatenate, GlobalAveragePooling2D, GaussianDropout
+>>>>>>> ec6166b03fcb5d13ec6e554a2de91f868e57224c
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow import train
 
 str_time = datetime.datetime.now()
 
+<<<<<<< HEAD
 datagen = ImageDataGenerator(
     vertical_flip=True,
     horizontal_flip=True,
@@ -27,6 +32,16 @@ datagen = ImageDataGenerator(
     height_shift_range=(-1, 1),
     rescale = 1./255
 )
+=======
+# datagen = ImageDataGenerator(
+#     vertical_flip=True,
+#     horizontal_flip=True,
+#     rotation_range=0.1,
+#     width_shift_range=(-1, 1),
+#     height_shift_range=(-1, 1),
+#     validation_split=0.8
+# )
+>>>>>>> ec6166b03fcb5d13ec6e554a2de91f868e57224c
 
 datagen2 = ImageDataGenerator(
     rescale=1./255
@@ -101,10 +116,19 @@ epochs = len(x_train)//batch_size
 
 model = Sequential()
 model.add(eff)
+<<<<<<< HEAD
 model.add(GlobalAveragePooling2D())
 model.add(Dense(4048, activation = 'swish'))
 model.add(Dropout(0.2))
 model.add(Dense(1000, activation = 'softmax'))
+=======
+# model.add(Conv2D(1024, kernel_size=3, padding='same', activation = 'swish'))
+model.add(GlobalAveragePooling2D())
+model.add(Dropout(0.3))
+model.add(Dense(128, activation='swish'))
+model.add(GaussianDropout(0.4))
+model.add(Dense(1000, activation='softmax'))
+>>>>>>> ec6166b03fcb5d13ec6e554a2de91f868e57224c
 
 model.compile(
     optimizer='adam',
@@ -135,5 +159,9 @@ submission.to_csv(
     index = False
 )
 
+<<<<<<< HEAD
 print('time : ', datetime.datetime.now() - str_time)
+=======
+print(datetime.datetime.now() - str_time)
+>>>>>>> ec6166b03fcb5d13ec6e554a2de91f868e57224c
 print('done')

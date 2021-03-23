@@ -135,3 +135,8 @@ submission.to_csv(
 
 print('total_time : ', datetime.now() - time_now)
 print('done!')
+
+# latest.checkpoint
+# modelcheckpoint 는 파일을 저장시키지만 latest.checkpoint 는 저장을 시키지 않는다.
+
+# model.evaluate.lateset.checkpoint

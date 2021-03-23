@@ -13,7 +13,7 @@ model = load_model(
 )
 
 test = np.load(
-    'c:/data/npy/lotte_test.npy'
+    'c:/data/npy/lotte_test_2.npy'
 )
 
 # test = test.reshape(-1, 128, 128, 3)

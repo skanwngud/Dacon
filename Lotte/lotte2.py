@@ -18,7 +18,7 @@ for i in range(72000):
     temp = cv2.imread(
         'c:/LPD_competition/test/%s.jpg'%i,
     )
-    temp = cv2.resize(temp, (128, 128))
+    temp = cv2.resize(temp, (200, 200))
     temp = np.array(temp)
     test.append(temp)
 
@@ -33,7 +33,7 @@ for i in range(1000):
         temp = cv2.imread(
             'c:/LPD_competition/train/' + str(i) +'/'+ str(j) + '.jpg',
         )
-        temp = cv2.resize(temp, (128, 128))
+        temp = cv2.resize(temp, (200, 200))
         temp = np.array(temp)
         train.append(temp)
         label.append(i)
@@ -49,6 +49,17 @@ print(label.shape)
 print(label[:50])
 
 np.save(
+<<<<<<< HEAD
+    'c:/data/npy/lotte_x_2.npy', arr = train
+)
+
+np.save(
+    'c:/data/npy/lotte_y_2.npy', arr = label
+)
+
+np.save(
+    'c:/data/npy/lotte_test_2.npy', arr = test
+=======
     'c:/data/npy/lotte_xs.npy', arr = train
 )
 
@@ -58,4 +69,5 @@ np.save(
 
 np.save(
     'c:/data/npy/lotte_tests.npy', arr = test
+>>>>>>> ec6166b03fcb5d13ec6e554a2de91f868e57224c
 )

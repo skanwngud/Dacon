@@ -11,41 +11,20 @@ from sklearn.model_selection import KFold, train_test_split
 from tensorflow.keras.applications import MobileNet, EfficientNetB4
 from tensorflow.keras.models import Model, Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten,\
-<<<<<<< HEAD
-    BatchNormalization, Activation, Dense, Dropout, Input, Concatenate, \
-        GlobalAveragePooling2D, Dropout
-=======
     BatchNormalization, Activation, Dense, Dropout, Input, Concatenate, GlobalAveragePooling2D, GaussianDropout
->>>>>>> ec6166b03fcb5d13ec6e554a2de91f868e57224c
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow import train
 
 str_time = datetime.datetime.now()
 
-<<<<<<< HEAD
 datagen = ImageDataGenerator(
-    vertical_flip=True,
-    horizontal_flip=True,
     rotation_range=40,
     width_shift_range=(-1, 1),
-    height_shift_range=(-1, 1),
-    rescale = 1./255
+    height_shift_range=(-1, 1)
 )
-=======
-# datagen = ImageDataGenerator(
-#     vertical_flip=True,
-#     horizontal_flip=True,
-#     rotation_range=0.1,
-#     width_shift_range=(-1, 1),
-#     height_shift_range=(-1, 1),
-#     validation_split=0.8
-# )
->>>>>>> ec6166b03fcb5d13ec6e554a2de91f868e57224c
 
-datagen2 = ImageDataGenerator(
-    rescale=1./255
-)
+datagen2 = ImageDataGenerator()
 
 es = EarlyStopping(
     patience=50,
@@ -64,15 +43,15 @@ mc = ModelCheckpoint(
 )
 
 x = np.load(
-    'c:/data/npy/lotte_x_2.npy'
+    'c:/data/npy/lotte_xs.npy'
 )
 
 y = np.load(
-    'c:/data/npy/lotte_y_2.npy'
+    'c:/data/npy/lotte_ys.npy'
 )
 
 test = np.load(
-    'c:/data/npy/lotte_test_2.npy'
+    'c:/data/npy/lotte_tests.npy'
 )
 
 submission = pd.read_csv(
@@ -86,16 +65,16 @@ submission = pd.read_csv(
 
 eff = EfficientNetB4(
     include_top=False,
-    input_shape=(200, 200, 3)
+    input_shape=(128, 128, 3)
 )
 
 # mob.trainable = True
 eff.trainable = True
 
-batch_size = 16
+batch_size = 32
 
 x_train, x_val, y_train, y_val = train_test_split(
-    x, y, train_size=0.8, random_state=23
+    x, y, train_size=0.9, random_state=23
 )
 
 train_set = datagen.flow(
@@ -116,19 +95,12 @@ epochs = len(x_train)//batch_size
 
 model = Sequential()
 model.add(eff)
-<<<<<<< HEAD
-model.add(GlobalAveragePooling2D())
-model.add(Dense(4048, activation = 'swish'))
-model.add(Dropout(0.2))
-model.add(Dense(1000, activation = 'softmax'))
-=======
 # model.add(Conv2D(1024, kernel_size=3, padding='same', activation = 'swish'))
 model.add(GlobalAveragePooling2D())
 model.add(Dropout(0.3))
 model.add(Dense(128, activation='swish'))
 model.add(GaussianDropout(0.4))
 model.add(Dense(1000, activation='softmax'))
->>>>>>> ec6166b03fcb5d13ec6e554a2de91f868e57224c
 
 model.compile(
     optimizer='adam',
@@ -136,13 +108,12 @@ model.compile(
     metrics='acc'
 )
 
-hist = model.fit(
+hist = model.fit_generator(
     train_set,
     validation_data=val_set,
     epochs=1000,
-    steps_per_epoch=epochs,
-    callbacks=[es, rl, mc],
-    batch_size = batch_size
+    steps_per_epoch=1350,
+    callbacks=[es, rl, mc]
 )
 
 model.load_weights(
@@ -159,9 +130,5 @@ submission.to_csv(
     index = False
 )
 
-<<<<<<< HEAD
 print('time : ', datetime.datetime.now() - str_time)
-=======
-print(datetime.datetime.now() - str_time)
->>>>>>> ec6166b03fcb5d13ec6e554a2de91f868e57224c
 print('done')

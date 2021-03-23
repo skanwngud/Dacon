@@ -13,6 +13,7 @@ from scipy import stats
 from sklearn.model_selection import KFold, train_test_split
 
 from tensorflow.keras.applications import MobileNet, EfficientNetB4
+from tensorflow.keras.applications.efficientnet import preprocess_input
 from tensorflow.keras.models import Model, Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten,\
     BatchNormalization, Activation, Dense, Dropout, Input, Concatenate, \
@@ -77,7 +78,8 @@ eff.trainable = True
 batch_size = 16
 epochs = len(x)//batch_size
 
-# 학원에서는 x,test 에 /255. 하고 집에서는 /255. 하지 말 것
+x = preprocess_input(x)
+test = preprocess_input(test)
 
 count = 0
 results = 0
@@ -157,18 +159,18 @@ for train_index, val_index in kf.split(x, y):
 
     count += 1
 
+submission['prediction'] = np.argmax(results, axis = -1)
+submission.to_csv(
+    'c:/data/csv/lotte.csv',
+    index = False
+)
+
 a = stats.mode(results, axis = 1).mode
 a = np.argmax(a, axis = -1)
 
 submission['prediction'] = a
 submission.to_csv(
     'c:/data/csv/lotte_s.csv',
-    index = False
-)
-
-submission['prediction'] = np.argmax(results, axis = -1)
-submission.to_csv(
-    'c:/data/csv/lotte.csv',
     index = False
 )
 

@@ -9,6 +9,7 @@ import datetime
 from sklearn.model_selection import KFold, train_test_split
 
 from tensorflow.keras.applications import MobileNet, EfficientNetB4
+from tensorflow.keras.applications.efficientnet import preprocess_input
 from tensorflow.keras.models import Model, Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten,\
     BatchNormalization, Activation, Dense, Dropout, Input, Concatenate, GlobalAveragePooling2D, GaussianDropout
@@ -27,7 +28,7 @@ datagen = ImageDataGenerator(
 datagen2 = ImageDataGenerator()
 
 es = EarlyStopping(
-    patience=50,
+    patience=30,
     verbose=1
 )
 
@@ -62,6 +63,9 @@ submission = pd.read_csv(
 #     include_top=False,
 #     input_shape=(128, 128, 3)
 # )
+
+x = preprocess_input(x)
+test = preprocess_input(test)
 
 eff = EfficientNetB4(
     include_top=False,

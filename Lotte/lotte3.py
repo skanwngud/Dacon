@@ -21,10 +21,13 @@ str_time = datetime.datetime.now()
 datagen = ImageDataGenerator(
     rotation_range=40,
     width_shift_range=(-1, 1),
-    height_shift_range=(-1, 1)
+    height_shift_range=(-1, 1),
+    # rescale = 1/255 # 쓰면 val_acc 박살남
 )
 
-datagen2 = ImageDataGenerator()
+datagen2 = ImageDataGenerator(
+    # rescale= 1/255 # 마찬가지
+)
 
 es = EarlyStopping(
     patience=20,

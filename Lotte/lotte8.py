@@ -23,7 +23,7 @@ for filename in all_file:
 
 print('2', datetime.datetime.now() - str_time)
 
-all_csv = pd.concat(csv, axis=1, ignore_index=True)
+all_csv = pd.concat(csv, axis = 1, ignore_index=True)
 # all_csv.to_csv(
 #     'c:/data/csv/lotte_all.csv', index = False
 # )

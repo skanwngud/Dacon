@@ -24,26 +24,27 @@ for filename in all_file:
 print('2', datetime.datetime.now() - str_time)
 
 all_csv = pd.concat(csv, axis=1, ignore_index=True)
-all_csv.to_csv(
-    'c:/data/csv/lotte_all.csv', index = False
-)
+# all_csv.to_csv(
+#     'c:/data/csv/lotte_all.csv', index = False
+# )
 
 print('3', datetime.datetime.now() - str_time)
 
-pred = pd.read_csv(
-    'c:/data/csv/lotte_all.csv', header=0
-)
+# pred = pd.read_csv(
+#     'c:/data/csv/lotte_all.csv', header=0
+# )
 
-print('4', datetime.datetime.now() - str_time)
+# print('4', datetime.datetime.now() - str_time)
 
-a = pred.iloc[1, :]
+# a = pred.iloc[1, :]
 
-print(pred.info())
-print(pred.head())
-print(type(pred))
-print(pred.iloc[1, :])
+# print(pred.info())
+# print(pred.head())
+# print(type(pred))
+# print(pred.iloc[1, :])
 
-pred = np.array(pred)
+# pred = np.array(pred)
+pred = np.array(all_csv)
 
 print(pred.shape) # (72000, 5)
 print(type(pred))

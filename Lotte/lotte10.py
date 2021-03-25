@@ -7,9 +7,13 @@ import tqdm
 # predict = list()
 # for i in tqdm(range(15)):
 
+import glob
 import numpy as np
 import pandas as pd
 import os
+
+from PIL import Image
+
 from tensorflow.keras.applications.efficientnet import EfficientNetB4
 from tensorflow.keras.applications.efficientnet import preprocess_input
 from tensorflow.keras.preprocessing.image import ImageDataGenerator, load_img
@@ -17,11 +21,12 @@ from tensorflow.keras.models import Sequential, load_model, Model
 from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, BatchNormalization, Flatten, Dropout, GlobalAveragePooling2D, Input, GaussianDropout
 from tensorflow.keras.activations import swish
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
+
 from scipy import stats
 
 #0. 변수
 filenum = 18
-img_size = 192
+img_size = 128
 batch = 16
 seed = 42
 epochs = 1000
@@ -33,7 +38,7 @@ test_gen = ImageDataGenerator(
 )
 
 
-test_dir = 'c:/LPD_competition/test_1/'
+test_dir = 'c:/LPD_competition/test_new/'
 
 # Found 72000 images belonging to 1 classes.
 test_data = test_gen.flow_from_directory(
@@ -48,6 +53,19 @@ eff = EfficientNetB4(
     include_top=False,
     input_shape=(128, 128, 3)
 )
+
+# 코드 실행시 모든 파일에 000을 붙여준다!
+# for i in range(1000):
+#     os.mkdir('../data/lpd/train_new/{0:04}'.format(i))
+
+#     for img in range(48):
+#         image = Image.open(f'../data/lpd/train/{i}/{img}.jpg')
+#         image.save('../data/lpd/train_new/{0:04}/{1:02}.jpg'.format(i, img))
+
+# for i in range(72000):
+#     image = Image.open(f'c:/LPD_competition/test_1/test/{i}.jpg')
+#     image.save('c:/LPD_competition/test_new/test_new/{0:05}.jpg'.format(i))
+#     print(str(i) + ' 번째 이미지생성 완료')
 
 # #2. 모델
 model = Sequential()

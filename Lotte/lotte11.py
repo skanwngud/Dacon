@@ -9,9 +9,10 @@ from scipy import stats
 
 csv = list()
 
-for i in range(14):
+for i in range(1,51):
+    filepath = 'c:/data/csv/sample_018_%2d.csv'%i
     temp = pd.read_csv(
-        'c:/data/csv/best_lotte_%s.csv'%i
+        filepath
     )
     temp2 = temp['prediction']
     csv.append(temp2)

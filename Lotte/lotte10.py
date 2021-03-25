@@ -62,10 +62,10 @@ eff = EfficientNetB4(
 #         image = Image.open(f'../data/lpd/train/{i}/{img}.jpg')
 #         image.save('../data/lpd/train_new/{0:04}/{1:02}.jpg'.format(i, img))
 
-# for i in range(72000):
-#     image = Image.open(f'c:/LPD_competition/test_1/test/{i}.jpg')
-#     image.save('c:/LPD_competition/test_new/test_new/{0:05}.jpg'.format(i))
-#     print(str(i) + ' 번째 이미지생성 완료')
+for i in range(72000):
+    image = Image.open(f'c:/LPD_competition/test_1/test/{i}.jpg')
+    image.save('c:/LPD_competition/test_new/test_new/{0:05}.jpg'.format(i))
+    print(str(i) + ' 번째 이미지생성 완료')
 
 # #2. 모델
 model = Sequential()

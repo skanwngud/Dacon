@@ -4,25 +4,37 @@
 import numpy as np
 import pandas as pd
 import glob
+import datetime
+
 from scipy import stats
+
+str_time = datetime.datetime.now()
 
 csv = list()
 all_file = glob.glob(
-    'c:/data/csv/best_lotte_*.csv'
+    'c:/data/csv/lotte_*.csv'
 )
+
+print('1', datetime.datetime.now() - str_time)
 
 for filename in all_file:
     temp = pd.read_csv(filename, index_col=0, header=0)
     csv.append(temp)
 
+print('2', datetime.datetime.now() - str_time)
+
 all_csv = pd.concat(csv, axis=1, ignore_index=True)
 all_csv.to_csv(
-    'c:/data/csv/lotte_all_csv.csv', index = False
+    'c:/data/csv/lotte_all.csv', index = False
 )
 
+print('3', datetime.datetime.now() - str_time)
+
 pred = pd.read_csv(
-    'c:/data/csv/lotte_all_csv.csv', header=0
+    'c:/data/csv/lotte_all.csv', header=0
 )
+
+print('4', datetime.datetime.now() - str_time)
 
 a = pred.iloc[1, :]
 
@@ -49,7 +61,7 @@ print(aa.shape)
 
 b = pd.DataFrame(aa)
 
-b.to_csv('c:/data/csv/lotte_b.csv', index=False)
+b.to_csv('c:/data/csv/lotte_democracy.csv', index=False)
 # count = stats.mode((72220,5), axis = 1).count
 
 submission = pd.read_csv(
@@ -58,4 +70,4 @@ submission = pd.read_csv(
 
 submission['prediction'] = b.iloc[:, 0]
 
-submission.to_csv('c:/data/csv/lotte_submiss ion.csv', index = False)
+submission.to_csv('c:/data/csv/lotte_submission_all.csv', index = False)

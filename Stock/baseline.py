@@ -16,7 +16,7 @@ stock_list['종목코드'] = stock_list['종목코드'].apply(lambda x:str(x).zf
 
 print(stock_list) # (370, 3)
 
-start_date = "20210104"
+start_date = "20100101"
 end_date = "20211105"
 
 start_weekday = pd.to_datetime(start_date).weekday()

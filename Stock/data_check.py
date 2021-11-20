@@ -26,4 +26,4 @@ for code in stock_code:
     print('next')
 
 
-# print(fdr.DataReader(str(list(stock_dict.values()))), str_date, end_date)
+print(fdr.DataReader(str(list(stock_dict.values()))), str_date, end_date)

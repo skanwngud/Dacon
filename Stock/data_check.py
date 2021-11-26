@@ -41,5 +41,7 @@ Business_days = pd.DataFrame(pd.date_range(str_date, end_date, freq='B'), column
 stock = pd.merge(Business_days, stock, how='outer')
 stock['weekday'] = stock.Date.apply(lambda x:x.weekday())
 stock['weeknum'] = stock.Date.apply(lambda x:x.strftime('%V'))
+stock.Close = stock.Close.ffill()
+stock = pd.pivot_table(data=stock, values='Close', columns='weekday', index='weeknum')
 
 print(stock)
